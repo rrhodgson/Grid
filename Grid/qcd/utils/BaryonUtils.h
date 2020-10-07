@@ -87,6 +87,28 @@ public:
 				 const int parity,
 				 const int nt,
 				 robj &result);
+
+  static void ContractBaryons_matrix(const PropagatorField &q1_left,
+         const PropagatorField &q2_left,
+         const PropagatorField &q3_left,
+         const Gamma GammaA_left,
+         const Gamma GammaB_left,
+         const Gamma GammaA_right,
+         const Gamma GammaB_right,
+         const bool* wick_contractions,
+         SpinMatrixField &baryon_corr);
+  template <class mobj, class robj>
+  static void ContractBaryons_Sliced_matrix(const mobj &D1,
+         const mobj &D2,
+         const mobj &D3,
+         const Gamma GammaA_left,
+         const Gamma GammaB_left,
+         const Gamma GammaA_right,
+         const Gamma GammaB_right,
+         const bool* wick_contractions,
+         const int nt,
+         robj &result);
+
   private:
   template <class mobj, class mobj2, class robj>
   static void Baryon_Gamma_3pt_Group1_Site(
@@ -439,6 +461,94 @@ void BaryonUtils<FImpl>::ContractBaryons_Sliced(const mobj &D1,
 
   for (int t=0; t<nt; t++) {
     baryon_site(D1[t],D2[t],D3[t],GammaA_left,GammaB_left,GammaA_right,GammaB_right,parity,wick_contractions,result[t]);
+  }
+}
+
+template<class FImpl>
+void BaryonUtils<FImpl>::ContractBaryons_matrix(const PropagatorField &q1_left,
+             const PropagatorField &q2_left,
+             const PropagatorField &q3_left,
+                         const Gamma GammaA_left,
+                         const Gamma GammaB_left,
+                         const Gamma GammaA_right,
+                         const Gamma GammaB_right,
+             const bool* wick_contractions,
+             SpinMatrixField &baryon_corr)
+{
+
+  assert(Ns==4 && "Baryon code only implemented for N_spin = 4");
+  assert(Nc==3 && "Baryon code only implemented for N_colour = 3");
+
+  std::cout << "GammaA (left) " << (GammaA_left.g) <<  std::endl;
+  std::cout << "GammaB (left) " << (GammaB_left.g) <<  std::endl;
+  std::cout << "GammaA (right) " << (GammaA_right.g) <<  std::endl;
+  std::cout << "GammaB (right) " << (GammaB_right.g) <<  std::endl;
+ 
+  GridBase *grid = q1_left.Grid();
+  
+  autoView(vbaryon_corr, baryon_corr,CpuWrite);
+  autoView( v1 , q1_left, CpuRead);
+  autoView( v2 , q2_left, CpuRead);
+  autoView( v3 , q3_left, CpuRead);
+
+  Real bytes =0.;
+  bytes += grid->oSites() * (432.*sizeof(vComplex) + 126.*sizeof(int) + 36.*sizeof(Real));
+  for (int ie=0; ie < 6 ; ie++){
+    if(ie==0 or ie==3){
+       bytes += grid->oSites() * (4.*sizeof(int) + 4752.*sizeof(vComplex)) * wick_contractions[ie];
+    }
+    else{
+       bytes += grid->oSites() * (64.*sizeof(int) + 5184.*sizeof(vComplex)) * wick_contractions[ie];
+    }
+  }
+  Real t=0.;
+  t =-usecond();
+
+  accelerator_for(ss, grid->oSites(), grid->Nsimd(), {
+    auto D1 = v1[ss];
+    auto D2 = v2[ss];
+    auto D3 = v3[ss];
+    sobj result=Zero();
+    baryon_site_matrix(D1,D2,D3,GammaA_left,GammaB_left,GammaA_right,GammaB_right,wick_contractions,result);
+    vbaryon_corr[ss] = result; 
+  }  );//end loop over lattice sites
+
+  t += usecond();
+
+  std::cout << std::setw(10) << bytes/t*1.0e6/1024/1024/1024 << " GB/s " << std::endl;
+
+}
+
+/* The array wick_contractions must be of length 6. The order     * 
+ * corresponds to the to that shown in the Hadrons documentation  *
+ * at https://aportelli.github.io/Hadrons-doc/#/mcontraction      *
+ * This can also be computed from the quark flavours using the    *
+ * Wick_Contractions function above                               */
+template <class FImpl>
+template <class mobj, class robj>
+void BaryonUtils<FImpl>::ContractBaryons_Sliced_matrix(const mobj &D1,
+             const mobj &D2,
+             const mobj &D3,
+                         const Gamma GammaA_left,
+                         const Gamma GammaB_left,
+                         const Gamma GammaA_right,
+                         const Gamma GammaB_right,
+             const bool* wick_contractions,
+             const int nt,
+             robj &result)
+{
+
+  assert(Ns==4 && "Baryon code only implemented for N_spin = 4");
+  assert(Nc==3 && "Baryon code only implemented for N_colour = 3");
+
+  std::cout << "GammaA (left) " << (GammaA_left.g) <<  std::endl;
+  std::cout << "GammaB (left) " << (GammaB_left.g) <<  std::endl;
+  std::cout << "GammaA (right) " << (GammaA_right.g) <<  std::endl;
+  std::cout << "GammaB (right) " << (GammaB_right.g) <<  std::endl;
+ 
+
+  for (int t=0; t<nt; t++) {
+    baryon_site_matrix(D1[t],D2[t],D3[t],GammaA_left,GammaB_left,GammaA_right,GammaB_right,wick_contractions,result[t]);
   }
 }
 
