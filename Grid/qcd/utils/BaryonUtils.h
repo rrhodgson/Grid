@@ -109,6 +109,17 @@ public:
          const int nt,
          robj &result);
 
+  template <class mobj, class robj>
+  static void baryon_site_matrix(const mobj &D1,
+                const mobj &D2,
+                const mobj &D3,
+                         const Gamma GammaA_i,
+                         const Gamma GammaB_i,
+                         const Gamma GammaA_f,
+                         const Gamma GammaB_f,
+                const bool * wick_contraction,
+                robj &result);
+
   private:
   template <class mobj, class mobj2, class robj>
   static void Baryon_Gamma_3pt_Group1_Site(
@@ -462,6 +473,123 @@ void BaryonUtils<FImpl>::ContractBaryons_Sliced(const mobj &D1,
   for (int t=0; t<nt; t++) {
     baryon_site(D1[t],D2[t],D3[t],GammaA_left,GammaB_left,GammaA_right,GammaB_right,parity,wick_contractions,result[t]);
   }
+}
+
+//New version without parity projection or trace
+template <class FImpl>
+template <class mobj, class robj>
+void BaryonUtils<FImpl>::baryon_site_matrix(const mobj &D1,
+                const mobj &D2,
+                const mobj &D3,
+                         const Gamma GammaA_i,
+                         const Gamma GammaB_i,
+                         const Gamma GammaA_f,
+                         const Gamma GammaB_f,
+                const bool * wick_contraction,
+                robj &result)
+{
+
+    
+    auto D1_GAi =  D1 * GammaA_i;
+    auto GAf_D1_GAi = GammaA_f * D1_GAi;
+    auto GBf_D1_GAi = GammaB_f * D1_GAi;
+
+    auto D2_GBi = D2 * GammaB_i;
+    auto GBf_D2_GBi = GammaB_f * D2_GBi;
+    auto GAf_D2_GBi = GammaA_f * D2_GBi;
+
+    auto GBf_D3 = GammaB_f * D3;
+    auto GAf_D3 = GammaA_f * D3;
+
+    for (int ie_f=0; ie_f < 6 ; ie_f++){
+        int a_f = epsilon[ie_f][0]; //a
+        int b_f = epsilon[ie_f][1]; //b
+        int c_f = epsilon[ie_f][2]; //c
+    for (int ie_i=0; ie_i < 6 ; ie_i++){
+        int a_i = epsilon[ie_i][0]; //a'
+        int b_i = epsilon[ie_i][1]; //b'
+        int c_i = epsilon[ie_i][2]; //c'
+
+        Real ee = epsilon_sgn[ie_f] * epsilon_sgn[ie_i];
+        //This is the \delta_{456}^{123} part
+        if (wick_contraction[0]){
+            for (int rho_i=0; rho_i<Ns; rho_i++){
+            for (int rho_f=0; rho_f<Ns; rho_f++){
+                auto GAf_D1_GAi_rr_cc = GAf_D1_GAi()(rho_f,rho_i)(c_f,c_i);
+                for (int alpha_f=0; alpha_f<Ns; alpha_f++){
+                for (int beta_i=0; beta_i<Ns; beta_i++){
+                    result()(rho_f,rho_i)() += ee  * GAf_D1_GAi_rr_cc
+                                        * D2_GBi    ()(alpha_f,beta_i)(a_f,a_i)
+                                        * GBf_D3    ()(alpha_f,beta_i)(b_f,b_i);
+                }}
+      }}
+        }   
+        //This is the \delta_{456}^{231} part
+        if (wick_contraction[1]){
+            for (int rho_i=0; rho_i<Ns; rho_i++){
+            for (int alpha_f=0; alpha_f<Ns; alpha_f++){
+                auto D1_GAi_ar_ac = D1_GAi()(alpha_f,rho_i)(a_f,c_i);
+                for (int beta_i=0; beta_i<Ns; beta_i++){
+                for (int rho_f=0; rho_f<Ns; rho_f++){
+                    result()(rho_f,rho_i)() += ee  * D1_GAi_ar_ac
+                                        * GBf_D2_GBi    ()(alpha_f,beta_i)(b_f,a_i)
+                                        * GAf_D3        ()(rho_f,beta_i)(c_f,b_i);
+    }}
+            }}
+        }   
+        //This is the \delta_{456}^{312} part
+        if (wick_contraction[2]){
+            for (int rho_i=0; rho_i<Ns; rho_i++){
+            for (int alpha_f=0; alpha_f<Ns; alpha_f++){
+                auto GBf_D1_GAi_ar_bc = GBf_D1_GAi()(alpha_f,rho_i)(b_f,c_i);
+                for (int beta_i=0; beta_i<Ns; beta_i++){
+                for (int rho_f=0; rho_f<Ns; rho_f++){
+                    result()(rho_f,rho_i)() += ee  * GBf_D1_GAi_ar_bc
+                                        * GAf_D2_GBi    ()(rho_f,beta_i)(c_f,a_i)
+                                        * D3            ()(alpha_f,beta_i)(a_f,b_i);
+    }}
+            }}
+        }   
+        //This is the \delta_{456}^{132} part
+        if (wick_contraction[3]){
+            for (int rho_i=0; rho_i<Ns; rho_i++){
+            for (int rho_f=0; rho_f<Ns; rho_f++){
+                auto GAf_D1_GAi_rr_cc = GAf_D1_GAi()(rho_f,rho_i)(c_f,c_i);
+                for (int alpha_f=0; alpha_f<Ns; alpha_f++){
+                for (int beta_i=0; beta_i<Ns; beta_i++){
+                    result()(rho_f,rho_i)() -= ee  * GAf_D1_GAi_rr_cc
+                                        * GBf_D2_GBi    ()(alpha_f,beta_i)(b_f,a_i)
+                                        * D3            ()(alpha_f,beta_i)(a_f,b_i);
+    }}
+            }}
+        }   
+        //This is the \delta_{456}^{321} part
+        if (wick_contraction[4]){
+            for (int rho_i=0; rho_i<Ns; rho_i++){
+            for (int alpha_f=0; alpha_f<Ns; alpha_f++){
+                auto GBf_D1_GAi_ar_bc = GBf_D1_GAi()(alpha_f,rho_i)(b_f,c_i);
+                for (int beta_i=0; beta_i<Ns; beta_i++){
+                for (int rho_f=0; rho_f<Ns; rho_f++){
+                    result()(rho_f,rho_i)() -= ee  * GBf_D1_GAi_ar_bc
+                                        * D2_GBi    ()(alpha_f,beta_i)(a_f,a_i)
+                                        * GAf_D3    ()(rho_f,beta_i)(c_f,b_i);
+    }}
+            }}
+        }   
+        //This is the \delta_{456}^{213} part
+        if (wick_contraction[5]){
+            for (int rho_i=0; rho_i<Ns; rho_i++){
+            for (int alpha_f=0; alpha_f<Ns; alpha_f++){
+                auto D1_GAi_ar_ac = D1_GAi()(alpha_f,rho_i)(a_f,c_i);
+                for (int beta_i=0; beta_i<Ns; beta_i++){
+                for (int rho_f=0; rho_f<Ns; rho_f++){
+                    result()(rho_f,rho_i)() -= ee  * D1_GAi_ar_ac
+                                        * GAf_D2_GBi    ()(rho_f,beta_i)(c_f,a_i)
+                                        * GBf_D3        ()(alpha_f,beta_i)(b_f,b_i);
+    }}
+            }}
+        }
+    }}
 }
 
 template<class FImpl>
