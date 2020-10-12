@@ -530,9 +530,10 @@ void BaryonUtils<FImpl>::baryon_site_matrix(const mobj &D1,
             for (int alpha_f=0; alpha_f<Ns; alpha_f++){
                 auto D1_GAi_ar_ac = D1_GAi()(alpha_f,rho_i)(a_f,c_i);
                 for (int beta_i=0; beta_i<Ns; beta_i++){
+                  auto GBf_D2_GBi_ab_ba = GBf_D2_GBi ()(alpha_f,beta_i)(b_f,a_i);
                 for (int rho_f=0; rho_f<Ns; rho_f++){
                     result()(rho_f,rho_i)() += ee  * D1_GAi_ar_ac
-                                        * GBf_D2_GBi    ()(alpha_f,beta_i)(b_f,a_i)
+                                        * GBf_D2_GBi_ab_ba
                                         * GAf_D3        ()(rho_f,beta_i)(c_f,b_i);
     }}
             }}
@@ -543,10 +544,11 @@ void BaryonUtils<FImpl>::baryon_site_matrix(const mobj &D1,
             for (int alpha_f=0; alpha_f<Ns; alpha_f++){
                 auto GBf_D1_GAi_ar_bc = GBf_D1_GAi()(alpha_f,rho_i)(b_f,c_i);
                 for (int beta_i=0; beta_i<Ns; beta_i++){
+                  auto D3_ab_ab = D3 ()(alpha_f,beta_i)(a_f,b_i);
                 for (int rho_f=0; rho_f<Ns; rho_f++){
                     result()(rho_f,rho_i)() += ee  * GBf_D1_GAi_ar_bc
                                         * GAf_D2_GBi    ()(rho_f,beta_i)(c_f,a_i)
-                                        * D3            ()(alpha_f,beta_i)(a_f,b_i);
+                                        * D3_ab_ab;
     }}
             }}
         }   
@@ -569,9 +571,10 @@ void BaryonUtils<FImpl>::baryon_site_matrix(const mobj &D1,
             for (int alpha_f=0; alpha_f<Ns; alpha_f++){
                 auto GBf_D1_GAi_ar_bc = GBf_D1_GAi()(alpha_f,rho_i)(b_f,c_i);
                 for (int beta_i=0; beta_i<Ns; beta_i++){
+                  auto D2_GBi_ab_aa = D2_GBi()(alpha_f,beta_i)(a_f,a_i);
                 for (int rho_f=0; rho_f<Ns; rho_f++){
                     result()(rho_f,rho_i)() -= ee  * GBf_D1_GAi_ar_bc
-                                        * D2_GBi    ()(alpha_f,beta_i)(a_f,a_i)
+                                        * D2_GBi_ab_aa
                                         * GAf_D3    ()(rho_f,beta_i)(c_f,b_i);
     }}
             }}
@@ -582,10 +585,11 @@ void BaryonUtils<FImpl>::baryon_site_matrix(const mobj &D1,
             for (int alpha_f=0; alpha_f<Ns; alpha_f++){
                 auto D1_GAi_ar_ac = D1_GAi()(alpha_f,rho_i)(a_f,c_i);
                 for (int beta_i=0; beta_i<Ns; beta_i++){
+                  auto GBf_D3_ab_bb = GBf_D3()(alpha_f,beta_i)(b_f,b_i);
                 for (int rho_f=0; rho_f<Ns; rho_f++){
                     result()(rho_f,rho_i)() -= ee  * D1_GAi_ar_ac
                                         * GAf_D2_GBi    ()(rho_f,beta_i)(c_f,a_i)
-                                        * GBf_D3        ()(alpha_f,beta_i)(b_f,b_i);
+                                        * GBf_D3_ab_bb;
     }}
             }}
         }
@@ -619,18 +623,18 @@ void BaryonUtils<FImpl>::ContractBaryons_matrix(const PropagatorField &q1_left,
   autoView( v2 , q2_left, CpuRead);
   autoView( v3 , q3_left, CpuRead);
 
-  Real bytes =0.;
-  bytes += grid->oSites() * (432.*sizeof(vComplex) + 126.*sizeof(int) + 36.*sizeof(Real));
-  for (int ie=0; ie < 6 ; ie++){
-    if(ie==0 or ie==3){
-       bytes += grid->oSites() * (4.*sizeof(int) + 4752.*sizeof(vComplex)) * wick_contractions[ie];
-    }
-    else{
-       bytes += grid->oSites() * (64.*sizeof(int) + 5184.*sizeof(vComplex)) * wick_contractions[ie];
-    }
-  }
-  Real t=0.;
-  t =-usecond();
+  // Real bytes =0.;
+  // bytes += grid->oSites() * (432.*sizeof(vComplex) + 126.*sizeof(int) + 36.*sizeof(Real));
+  // for (int ie=0; ie < 6 ; ie++){
+  //   if(ie==0 or ie==3){
+  //      bytes += grid->oSites() * (4.*sizeof(int) + 4752.*sizeof(vComplex)) * wick_contractions[ie];
+  //   }
+  //   else{
+  //      bytes += grid->oSites() * (64.*sizeof(int) + 5184.*sizeof(vComplex)) * wick_contractions[ie];
+  //   }
+  // }
+  // Real t=0.;
+  // t =-usecond();
 
   accelerator_for(ss, grid->oSites(), grid->Nsimd(), {
     auto D1 = v1[ss];
@@ -641,9 +645,9 @@ void BaryonUtils<FImpl>::ContractBaryons_matrix(const PropagatorField &q1_left,
     vbaryon_corr[ss] = result; 
   }  );//end loop over lattice sites
 
-  t += usecond();
+  // t += usecond();
 
-  std::cout << std::setw(10) << bytes/t*1.0e6/1024/1024/1024 << " GB/s " << std::endl;
+  // std::cout << std::setw(10) << bytes/t*1.0e6/1024/1024/1024 << " GB/s " << std::endl;
 
 }
 
