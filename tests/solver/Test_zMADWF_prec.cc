@@ -130,15 +130,30 @@ void run(const TestParams &params){
   RealD bmc = 1.0; //use Shamir kernel
   std::vector<ComplexD> gamma_inner;
 
-  std::cout << "Compute parameters" << std::endl;
-  if(params.zmobius_inner){
-    Approx::computeZmobiusGamma(gamma_inner, params.b_plus_c_inner, params.Ls_inner, params.b_plus_c_outer, params.Ls_outer, params.lambda_max);
-  }else{
-    Approx::zolotarev_data *zdata = Approx::higham(1.0,params.Ls_inner);
-    gamma_inner.resize(params.Ls_inner);
-    for(int s=0;s<params.Ls_inner;s++) gamma_inner[s] = zdata->gamma[s];
-    Approx::zolotarev_free(zdata);
-  }
+  // std::cout << "Compute parameters" << std::endl;
+  // if(params.zmobius_inner){
+  //   Approx::computeZmobiusGamma(gamma_inner, params.b_plus_c_inner, params.Ls_inner, params.b_plus_c_outer, params.Ls_outer, params.lambda_max);
+  // }else{
+  //   Approx::zolotarev_data *zdata = Approx::higham(1.0,params.Ls_inner);
+  //   gamma_inner.resize(params.Ls_inner);
+  //   for(int s=0;s<params.Ls_inner;s++) gamma_inner[s] = zdata->gamma[s];
+  //   Approx::zolotarev_free(zdata);
+  // }
+
+
+
+std::cout << "Accept parameters" << std::endl;
+    gamma_inner.push_back(ComplexD(1.458064389850479e+00,-0.000000000000000e+00));
+    gamma_inner.push_back(ComplexD(1.182313183893475e+00,-0.000000000000000e+00));
+    gamma_inner.push_back(ComplexD(8.309511666859551e-01,-0.000000000000000e+00));
+    gamma_inner.push_back(ComplexD(5.423524091567911e-01,-0.000000000000000e+00));
+    gamma_inner.push_back(ComplexD(3.419850204537295e-01,-0.000000000000000e+00));
+    gamma_inner.push_back(ComplexD(2.113790261902896e-01,-0.000000000000000e+00));
+    gamma_inner.push_back(ComplexD(1.260742995029118e-01,-0.000000000000000e+00));
+    gamma_inner.push_back(ComplexD(9.901366519626265e-02,-0.000000000000000e+00));
+    gamma_inner.push_back(ComplexD(6.863249884465925e-02, 5.506585308274019e-02));
+    gamma_inner.push_back(ComplexD(6.863249884465925e-02,-5.506585308274019e-02));
+
   std::cout << "gamma:\n";
   for(int s=0;s<params.Ls_inner;s++) std::cout << s << " " << gamma_inner[s] << std::endl;
 
@@ -267,8 +282,8 @@ void run(const TestParams &params){
 	    << " Norm of diff " << norm2(diff)<<std::endl;
 
 
-  //std::cout << GridLogMessage << "######## Dhop calls summary" << std::endl;
-  //D_outer.Report();
+  std::cout << GridLogMessage << "######## Dhop calls summary" << std::endl;
+  D_outer.Report();
 }
 
 
@@ -279,15 +294,33 @@ int main(int argc, char** argv) {
 
   TestParams params;
   
-  if( GridCmdOptionExists(argv,argv+argc,"--params") ){
-    std::string pfile = GridCmdOptionPayload(argv,argv+argc,"--params");
-    if(pfile == "TEMPLATE"){
-      params.write("params.templ");
-      return 0;
-    }else{
-      params.read(pfile);
-    }
-  }
+  // if( GridCmdOptionExists(argv,argv+argc,"--params") ){
+  //   std::string pfile = GridCmdOptionPayload(argv,argv+argc,"--params");
+  //   if(pfile == "TEMPLATE"){
+  //     params.write("params.templ");
+  //     return 0;
+  //   }else{
+  //     params.read(pfile);
+  //   }
+  // }
+
+  params.load_config(true)
+  params.config_file("/tessfs1/work/dp008/dp008/shared/data/config/C0/ckpoint_lat.1000");
+
+  params.mass(0.00078);
+
+  params.Ls_outer(24);
+  params.b_plus_c_outer(2.0);
+  params.resid_outer(1e-8);
+
+  params.Ls_inner(10);
+  params.b_plus_c_inner(1.0);
+  params.resid_inner(1e-8);
+  params.zmobius_inner(true);
+
+  params.lambda_max(1.42);
+  params.outer_precon("DiagTwo");
+  params.inner_precon("DiagTwo")
 
   if(params.outer_precon == "Standard" && params.inner_precon == "Standard" ){
     run<RunParamsPrecStd, RunParamsPrecStd>(params);
