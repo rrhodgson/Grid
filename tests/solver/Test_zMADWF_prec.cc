@@ -45,16 +45,23 @@ struct TestParams{
   int Ls_outer;
   double b_plus_c_outer;
   double resid_outer;
+  int itter_outer;
   
   int Ls_inner;
   double b_plus_c_inner; //irrelevant for ZMobius
   double resid_inner;
+  int itter_inner;
   bool zmobius_inner;
+  bool accept_gammas;
   double lambda_max; //upper bound of H_T eigenvalue range required to generate zMobius approximation
+
+  int Nloop;
   
   TestParams(): load_config(true), config_file("ckpoint_lat.1000"), mass(0.01),
-    Ls_outer(24), b_plus_c_outer(2.0), resid_outer(1e-8),
-    Ls_inner(12), b_plus_c_inner(1.0), resid_inner(1e-8), zmobius_inner(true), lambda_max(1.42), outer_precon("Standard"), inner_precon("Standard")
+    Ls_outer(24), b_plus_c_outer(2.0), resid_outer(1e-8), itter_outer(100), 
+    Ls_inner(10), b_plus_c_inner(1.0), resid_inner(1e-8), itter_inner(30000), 
+    zmobius_inner(true), accept_gammas(false), lambda_max(1.42), 
+    outer_precon("Standard"), inner_precon("Standard"), Nloop(1)
   {}
   
   void write(const std::string &file) const{
@@ -68,11 +75,15 @@ struct TestParams{
     DOIT(Ls_outer);
     DOIT(b_plus_c_outer);
     DOIT(resid_outer);
+    DOIT(itter_outer);
     DOIT(Ls_inner);
     DOIT(b_plus_c_inner);
     DOIT(resid_inner);
+    DOIT(itter_inner);
     DOIT(zmobius_inner);
+    DOIT(accept_gammas);
     DOIT(lambda_max);
+    DOIT(Nloop);
 #undef DOIT
   }
   void read(const std::string &file){
@@ -90,7 +101,9 @@ struct TestParams{
     DOIT(b_plus_c_inner);
     DOIT(resid_inner);
     DOIT(zmobius_inner);
+    DOIT(accept_gammas);
     DOIT(lambda_max);
+    DOIT(Nloop);
 #undef DOIT
   }
 };
@@ -127,22 +140,21 @@ struct CGincreaseTol : public MADWFinnerIterCallbackBase{
 
 template<typename RunParamsOuter, typename RunParamsInner>
 void run(const TestParams &params){
+
+  std::cout << "Loading config file '" << params.config_file << "'" << std::endl
+            << "Looping " << params.Nloop << " times" << std::endl
+            << "Using    outer Ls = " << params.Ls_outer << std::endl
+            << "Using    inner Ls = " << params.Ls_inner << std::endl
+            << "Using        mass = " << params.mass << std::endl
+            << "Using itter inner = " << params.itter_inner << std::endl
+            << "Using itter outer = " << params.itter_outer << std::endl;
+
+
   RealD bmc = 1.0; //use Shamir kernel
   std::vector<ComplexD> gamma_inner;
 
-  // std::cout << "Compute parameters" << std::endl;
-  // if(params.zmobius_inner){
-  //   Approx::computeZmobiusGamma(gamma_inner, params.b_plus_c_inner, params.Ls_inner, params.b_plus_c_outer, params.Ls_outer, params.lambda_max);
-  // }else{
-  //   Approx::zolotarev_data *zdata = Approx::higham(1.0,params.Ls_inner);
-  //   gamma_inner.resize(params.Ls_inner);
-  //   for(int s=0;s<params.Ls_inner;s++) gamma_inner[s] = zdata->gamma[s];
-  //   Approx::zolotarev_free(zdata);
-  // }
-
-
-
-std::cout << "Accept parameters" << std::endl;
+  if (params.accept_gammas) {
+    std::cout << "Accept parameters" << std::endl;
     gamma_inner.push_back(ComplexD(1.458064389850479e+00,-0.000000000000000e+00));
     gamma_inner.push_back(ComplexD(1.182313183893475e+00,-0.000000000000000e+00));
     gamma_inner.push_back(ComplexD(8.309511666859551e-01,-0.000000000000000e+00));
@@ -153,6 +165,17 @@ std::cout << "Accept parameters" << std::endl;
     gamma_inner.push_back(ComplexD(9.901366519626265e-02,-0.000000000000000e+00));
     gamma_inner.push_back(ComplexD(6.863249884465925e-02, 5.506585308274019e-02));
     gamma_inner.push_back(ComplexD(6.863249884465925e-02,-5.506585308274019e-02));
+  } else {
+    std::cout << "Compute parameters" << std::endl;
+    if(params.zmobius_inner){
+      Approx::computeZmobiusGamma(gamma_inner, params.b_plus_c_inner, params.Ls_inner, params.b_plus_c_outer, params.Ls_outer, params.lambda_max);
+    }else{
+      Approx::zolotarev_data *zdata = Approx::higham(1.0,params.Ls_inner);
+      gamma_inner.resize(params.Ls_inner);
+      for(int s=0;s<params.Ls_inner;s++) gamma_inner[s] = zdata->gamma[s];
+      Approx::zolotarev_free(zdata);
+    }
+  }
 
   std::cout << "gamma:\n";
   for(int s=0;s<params.Ls_inner;s++) std::cout << s << " " << gamma_inner[s] << std::endl;
@@ -223,7 +246,7 @@ std::cout << "Accept parameters" << std::endl;
   //y'_o = (Mprec^dag Mprec)^-1 Mprec^dag x'_o 
 
   //We can get Mprec^dag x'_o from x_o  from SchurRedBlackDiagMooeeSolve::RedBlackSource
-  ConjugateGradient<LatticeFermionD> CG_outer(params.resid_outer, 10000);
+  ConjugateGradient<LatticeFermionD> CG_outer(params.resid_outer, params.itter_inner);
   typename RunParamsOuter::SchurSolverType SchurSolver_outer(CG_outer);
   
   LatticeFermionD tmp_e_outer(FrbGrid_outer);
@@ -254,36 +277,41 @@ std::cout << "Accept parameters" << std::endl;
   typedef PauliVillarsSolverFourierAccel<LatticeFermionD, LatticeGaugeFieldD> PVtype;
   PVtype PV_outer(Umu, CG_outer);
 
-  ConjugateGradient<LatticeFermionD> CG_inner(params.resid_inner, 10000, 0);
+  ConjugateGradient<LatticeFermionD> CG_inner(params.resid_inner, params.itter_inner, 0);
 
   CGincreaseTol update(CG_inner, params.resid_outer);
 
   typename RunParamsInner::SchurSolverType SchurSolver_inner(CG_inner);
 
   ZeroGuesser<LatticeFermion> Guess;
-  MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, ZeroGuesser<LatticeFermion> > madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, Guess, params.resid_outer, 100, &update);
+  MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, ZeroGuesser<LatticeFermion> > 
+        madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, Guess, params.resid_outer, params.itter_outer, &update);
   
   LatticeFermionD result_MADWF(FGrid_outer);
-  result_MADWF = Zero();
 
-  CGTimer.Start();
-  madwf(src4, result_MADWF);
-  CGTimer.Stop();
+  for (int k=0; k<params.Nloop; k++) {
+    std::cout << std::endl << "=========================== Loop k = " << k << " ===========================" << std::endl << std::endl;
+    result_MADWF = Zero();
 
-  LatticeFermionD result_o_MADWF(FrbGrid_outer);
-  pickCheckerboard(Odd, result_o_MADWF, result_MADWF);
+    CGTimer.Start();
+    madwf(src4, result_MADWF);
+    CGTimer.Stop();
 
-  std::cout << GridLogMessage << "Total MADWF time : " << CGTimer.Elapsed()
-            << std::endl;
+    LatticeFermionD result_o_MADWF(FrbGrid_outer);
+    pickCheckerboard(Odd, result_o_MADWF, result_MADWF);
 
-  LatticeFermionD diff = result_o_MADWF - result_o_outer;
-  std::cout <<GridLogMessage<< "Odd-parity MADWF result norm " << norm2(result_o_MADWF) 
-      << " Regular result norm " << norm2(result_o_outer) 
-      << " Norm of diff " << norm2(diff)<<std::endl;
+    std::cout << GridLogMessage << "Total MADWF time : " << CGTimer.Elapsed()
+              << std::endl;
+
+    LatticeFermionD diff = result_o_MADWF - result_o_outer;
+    std::cout <<GridLogMessage<< "Odd-parity MADWF result norm " << norm2(result_o_MADWF) 
+        << " Regular result norm " << norm2(result_o_outer) 
+        << " Norm of diff " << norm2(diff)<<std::endl;
 
 
-  std::cout << GridLogMessage << "######## Dhop calls summary" << std::endl;
-  D_outer.Report();
+    std::cout << GridLogMessage << "######## Dhop calls summary" << std::endl;
+    D_outer.Report();
+  }
 }
 
 
@@ -294,33 +322,15 @@ int main(int argc, char** argv) {
 
   TestParams params;
   
-  // if( GridCmdOptionExists(argv,argv+argc,"--params") ){
-  //   std::string pfile = GridCmdOptionPayload(argv,argv+argc,"--params");
-  //   if(pfile == "TEMPLATE"){
-  //     params.write("params.templ");
-  //     return 0;
-  //   }else{
-  //     params.read(pfile);
-  //   }
-  // }
-
-  params.load_config(true)
-  params.config_file("/tessfs1/work/dp008/dp008/shared/data/config/C0/ckpoint_lat.1000");
-
-  params.mass(0.00078);
-
-  params.Ls_outer(24);
-  params.b_plus_c_outer(2.0);
-  params.resid_outer(1e-8);
-
-  params.Ls_inner(10);
-  params.b_plus_c_inner(1.0);
-  params.resid_inner(1e-8);
-  params.zmobius_inner(true);
-
-  params.lambda_max(1.42);
-  params.outer_precon("DiagTwo");
-  params.inner_precon("DiagTwo")
+  if( GridCmdOptionExists(argv,argv+argc,"--params") ){
+    std::string pfile = GridCmdOptionPayload(argv,argv+argc,"--params");
+    if(pfile == "TEMPLATE"){
+      params.write("params.templ");
+      return 0;
+    }else{
+      params.read(pfile);
+    }
+  }
 
   if(params.outer_precon == "Standard" && params.inner_precon == "Standard" ){
     run<RunParamsPrecStd, RunParamsPrecStd>(params);
