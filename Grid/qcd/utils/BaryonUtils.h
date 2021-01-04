@@ -50,7 +50,7 @@ public:
   static const Real epsilon_sgn[6];
 
   private: 
-  template <class mobj, class robj>
+  template <class mobj, class robj> accelerator_inline
   static void BaryonSite(const mobj &D1,
 				 const mobj &D2,
 				 const mobj &D3,
@@ -61,7 +61,7 @@ public:
 				 const int parity,
 				 const bool * wick_contractions,
   				 robj &result);
-  template <class mobj, class robj>
+  template <class mobj, class robj> accelerator_inline
   static void BaryonSiteMatrix(const mobj &D1,
          const mobj &D2,
          const mobj &D3,
@@ -118,7 +118,7 @@ public:
          const int nt,
          robj &result);
   private:
-  template <class mobj, class mobj2, class robj>
+  template <class mobj, class mobj2, class robj> accelerator_inline
   static void BaryonGamma3ptGroup1Site(
            const mobj &Dq1_ti,
            const mobj2 &Dq2_spec,
@@ -130,7 +130,7 @@ public:
            int wick_contraction,
            robj &result);
 
-  template <class mobj, class mobj2, class robj>
+  template <class mobj, class mobj2, class robj> accelerator_inline
   static void BaryonGamma3ptGroup2Site(
            const mobj2 &Dq1_spec,
            const mobj &Dq2_ti,
@@ -142,7 +142,7 @@ public:
            int wick_contraction,
            robj &result);
 
-  template <class mobj, class mobj2, class robj>
+  template <class mobj, class mobj2, class robj> accelerator_inline
   static void BaryonGamma3ptGroup3Site(
            const mobj2 &Dq1_spec,
            const mobj2 &Dq2_spec,
@@ -167,7 +167,7 @@ public:
                    const Gamma GammaBf,
            SpinMatrixField &stn_corr);
   private: 
-  template <class mobj, class mobj2, class robj>
+  template <class mobj, class mobj2, class robj> accelerator_inline
   static void SigmaToNucleonQ1EyeSite(const mobj &Dq_loop,
 						 const mobj2 &Du_spec,
 						 const mobj &Dd_tf,
@@ -176,7 +176,7 @@ public:
 				                 const Gamma GammaB_sigma,
 		                 		 const Gamma GammaB_nucl,
 						 robj &result);
-  template <class mobj, class mobj2, class robj>
+  template <class mobj, class mobj2, class robj> accelerator_inline
   static void SigmaToNucleonQ1NonEyeSite(const mobj &Du_ti,
 						 const mobj &Du_tf,
 						 const mobj2 &Du_spec,
@@ -188,7 +188,7 @@ public:
 						 robj &result);
 
 
-  template <class mobj, class mobj2, class robj>
+  template <class mobj, class mobj2, class robj> accelerator_inline
   static void SigmaToNucleonQ2EyeSite(const mobj &Dq_loop,
 						 const mobj2 &Du_spec,
 						 const mobj &Dd_tf,
@@ -197,7 +197,7 @@ public:
 				                 const Gamma GammaB_sigma,
 		                 		 const Gamma GammaB_nucl,
 						 robj &result);
-  template <class mobj, class mobj2, class robj>
+  template <class mobj, class mobj2, class robj> accelerator_inline
   static void SigmaToNucleonQ2NonEyeSite(const mobj &Du_ti,
 						 const mobj &Du_tf,
 						 const mobj2 &Du_spec,
@@ -246,7 +246,7 @@ const Real BaryonUtils<FImpl>::epsilon_sgn[6] = {1.,1.,1.,-1.,-1.,-1.};
 
 //This is the old version
 template <class FImpl>
-template <class mobj, class robj>
+template <class mobj, class robj> accelerator_inline
 void BaryonUtils<FImpl>::BaryonSite(const mobj &D1,
                 const mobj &D2,
                 const mobj &D3,
@@ -361,7 +361,7 @@ void BaryonUtils<FImpl>::BaryonSite(const mobj &D1,
 
 //New version without parity projection or trace
 template <class FImpl>
-template <class mobj, class robj>
+template <class mobj, class robj> accelerator_inline
 void BaryonUtils<FImpl>::BaryonSiteMatrix(const mobj &D1,
                 const mobj &D2,
                 const mobj &D3,
@@ -676,7 +676,7 @@ void BaryonUtils<FImpl>::ContractBaryonsSlicedMatrix(const mobj &D1,
  * Dq3_spec is a quark line from t_i to t_f
  * Dq4_tf is a quark line from t_f to t_J */
 template<class FImpl>
-template <class mobj, class mobj2, class robj>
+template <class mobj, class mobj2, class robj> accelerator_inline
 void BaryonUtils<FImpl>::BaryonGamma3ptGroup1Site(
                         const mobj &Dq1_ti,
                         const mobj2 &Dq2_spec,
@@ -768,7 +768,7 @@ void BaryonUtils<FImpl>::BaryonGamma3ptGroup1Site(
  * Dq3_spec is a quark line from t_i to t_f
  * Dq4_tf is a quark line from t_f to t_J */
 template<class FImpl>
-template <class mobj, class mobj2, class robj>
+template <class mobj, class mobj2, class robj> accelerator_inline
 void BaryonUtils<FImpl>::BaryonGamma3ptGroup2Site(
                         const mobj2 &Dq1_spec,
                         const mobj &Dq2_ti,
@@ -858,7 +858,7 @@ void BaryonUtils<FImpl>::BaryonGamma3ptGroup2Site(
  * Dq3_ti is a quark line from t_i to t_J
  * Dq4_tf is a quark line from t_f to t_J */
 template<class FImpl>
-template <class mobj, class mobj2, class robj>
+template <class mobj, class mobj2, class robj> accelerator_inline
 void BaryonUtils<FImpl>::BaryonGamma3ptGroup3Site(
                         const mobj2 &Dq1_spec,
                         const mobj2 &Dq2_spec,
@@ -1042,7 +1042,7 @@ void BaryonUtils<FImpl>::BaryonGamma3pt(
  * Dd_tf is a quark line from t_f to t_H
  * Ds_ti is a quark line from t_i to t_H */
 template <class FImpl>
-template <class mobj, class mobj2, class robj>
+template <class mobj, class mobj2, class robj> accelerator_inline
 void BaryonUtils<FImpl>::SigmaToNucleonQ1EyeSite(const mobj &Dq_loop,
 						 const mobj2 &Du_spec,
 						 const mobj &Dd_tf,
@@ -1100,7 +1100,7 @@ void BaryonUtils<FImpl>::SigmaToNucleonQ1EyeSite(const mobj &Dq_loop,
  * Dd_tf is a quark line from t_f to t_H
  * Ds_ti is a quark line from t_i to t_H */
 template <class FImpl>
-template <class mobj, class mobj2, class robj>
+template <class mobj, class mobj2, class robj> accelerator_inline
 void BaryonUtils<FImpl>::SigmaToNucleonQ1NonEyeSite(const mobj &Du_ti,
 						 const mobj &Du_tf,
 						 const mobj2 &Du_spec,
@@ -1166,7 +1166,7 @@ void BaryonUtils<FImpl>::SigmaToNucleonQ1NonEyeSite(const mobj &Du_ti,
  * Dd_tf is a quark line from t_f to t_H
  * Ds_ti is a quark line from t_i to t_H */
 template <class FImpl>
-template <class mobj, class mobj2, class robj>
+template <class mobj, class mobj2, class robj> accelerator_inline
 void BaryonUtils<FImpl>::SigmaToNucleonQ2EyeSite(const mobj &Dq_loop,
 						 const mobj2 &Du_spec,
 						 const mobj &Dd_tf,
@@ -1221,7 +1221,7 @@ void BaryonUtils<FImpl>::SigmaToNucleonQ2EyeSite(const mobj &Dq_loop,
  * Dd_tf is a quark line from t_f to t_H
  * Ds_ti is a quark line from t_i to t_H */
 template <class FImpl>
-template <class mobj, class mobj2, class robj>
+template <class mobj, class mobj2, class robj> accelerator_inline
 void BaryonUtils<FImpl>::SigmaToNucleonQ2NonEyeSite(const mobj &Du_ti,
 						 const mobj &Du_tf,
 						 const mobj2 &Du_spec,
