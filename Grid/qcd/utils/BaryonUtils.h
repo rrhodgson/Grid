@@ -519,10 +519,15 @@ void BaryonUtils<FImpl>::ContractBaryons(const PropagatorField &q1_left,
 
   GridBase *grid = q1_left.Grid();
   
-  autoView(vbaryon_corr, baryon_corr,CpuWrite);
-  autoView( v1 , q1_left, CpuRead);
-  autoView( v2 , q2_left, CpuRead);
-  autoView( v3 , q3_left, CpuRead);
+  // autoView(vbaryon_corr, baryon_corr,CpuWrite);
+  // autoView( v1 , q1_left, CpuRead);
+  // autoView( v2 , q2_left, CpuRead);
+  // autoView( v3 , q3_left, CpuRead);
+
+  autoView(vbaryon_corr , baryon_corr , AcceleratorWrite);
+  autoView( v1          , q1_left     , AcceleratorRead);
+  autoView( v2          , q2_left     , AcceleratorRead);
+  autoView( v3          , q3_left     , AcceleratorRead);
 
   Real bytes =0.;
   bytes += grid->oSites() * (432.*sizeof(vComplex) + 126.*sizeof(int) + 36.*sizeof(Real));
@@ -537,13 +542,23 @@ void BaryonUtils<FImpl>::ContractBaryons(const PropagatorField &q1_left,
   Real t=0.;
   t =-usecond();
 
+  // accelerator_for(ss, grid->oSites(), grid->Nsimd(), {
+  //   auto D1 = v1[ss];
+  //   auto D2 = v2[ss];
+  //   auto D3 = v3[ss];
+  //   vobj result=Zero();
+  //   BaryonSite(D1,D2,D3,GammaA_left,GammaB_left,GammaA_right,GammaB_right,parity,wick_contractions,result);
+  //   vbaryon_corr[ss] = result; 
+  // }  );//end loop over lattice sites
+
   accelerator_for(ss, grid->oSites(), grid->Nsimd(), {
-    auto D1 = v1[ss];
-    auto D2 = v2[ss];
-    auto D3 = v3[ss];
+    auto D1 = v1(ss);
+    auto D2 = v2(ss);
+    auto D3 = v3(ss);
     vobj result=Zero();
     BaryonSite(D1,D2,D3,GammaA_left,GammaB_left,GammaA_right,GammaB_right,parity,wick_contractions,result);
-    vbaryon_corr[ss] = result; 
+    // vbaryon_corr[ss] = result; 
+    coalescedWrite(vbaryon_corr[ss],result);
   }  );//end loop over lattice sites
 
   t += usecond();
@@ -568,37 +583,34 @@ void BaryonUtils<FImpl>::ContractBaryonsMatrix(const PropagatorField &q1_left,
  
   GridBase *grid = q1_left.Grid();
   
-  autoView(vbaryon_corr, baryon_corr,CpuWrite);
-  autoView( v1 , q1_left, CpuRead);
-  autoView( v2 , q2_left, CpuRead);
-  autoView( v3 , q3_left, CpuRead);
+  // autoView(vbaryon_corr, baryon_corr,CpuWrite);
+  // autoView( v1 , q1_left, CpuRead);
+  // autoView( v2 , q2_left, CpuRead);
+  // autoView( v3 , q3_left, CpuRead);
 
-  // Real bytes =0.;
-  // bytes += grid->oSites() * (432.*sizeof(vComplex) + 126.*sizeof(int) + 36.*sizeof(Real));
-  // for (int ie=0; ie < 6 ; ie++){
-  //   if(ie==0 or ie==3){
-  //      bytes += grid->oSites() * (4.*sizeof(int) + 4752.*sizeof(vComplex)) * wick_contractions[ie];
-  //   }
-  //   else{
-  //      bytes += grid->oSites() * (64.*sizeof(int) + 5184.*sizeof(vComplex)) * wick_contractions[ie];
-  //   }
-  // }
-  // Real t=0.;
-  // t =-usecond();
+  // accelerator_for(ss, grid->oSites(), grid->Nsimd(), {
+  //   auto D1 = v1[ss];
+  //   auto D2 = v2[ss];
+  //   auto D3 = v3[ss];
+  //   sobj result=Zero();
+  //   BaryonSiteMatrix(D1,D2,D3,GammaA_left,GammaB_left,GammaA_right,GammaB_right,wick_contractions,result);
+  //   vbaryon_corr[ss] = result; 
+  // }  );//end loop over lattice sites
+
+  autoView(vbaryon_corr , baryon_corr , AcceleratorWrite);
+  autoView( v1          , q1_left     , AcceleratorRead);
+  autoView( v2          , q2_left     , AcceleratorRead);
+  autoView( v3          , q3_left     , AcceleratorRead);
 
   accelerator_for(ss, grid->oSites(), grid->Nsimd(), {
-    auto D1 = v1[ss];
-    auto D2 = v2[ss];
-    auto D3 = v3[ss];
+    auto D1 = v1(ss);
+    auto D2 = v2(ss);
+    auto D3 = v3(ss);
     sobj result=Zero();
     BaryonSiteMatrix(D1,D2,D3,GammaA_left,GammaB_left,GammaA_right,GammaB_right,wick_contractions,result);
-    vbaryon_corr[ss] = result; 
+    // vbaryon_corr[ss] = result;
+    coalescedWrite(vbaryon_corr[ss],result);
   }  );//end loop over lattice sites
-
-  // t += usecond();
-
-  // std::cout << GridLogDebug << std::setw(10) << bytes/t*1.0e6/1024/1024/1024 << " GB/s " << std::endl;
-
 }
 
 /* The array wick_contractions must be of length 6. The order     * 
