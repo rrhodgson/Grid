@@ -381,25 +381,41 @@ inline void acceleratorCopyDeviceToDevice(void *from,void *to,size_t bytes)  { m
 inline int  acceleratorIsCommunicable(void *ptr){ return 1; }
 inline void acceleratorMemSet(void *base,int value,size_t bytes) { memset(base,value,bytes);}
 #ifdef HAVE_MM_MALLOC_H
-inline void *acceleratorAllocShared(size_t bytes){return _mm_malloc(bytes,GRID_ALLOC_ALIGN);};
-inline void *acceleratorAllocDevice(size_t bytes){return _mm_malloc(bytes,GRID_ALLOC_ALIGN);};
-inline void acceleratorFreeShared(void *ptr){_mm_free(ptr);};
-inline void acceleratorFreeDevice(void *ptr){_mm_free(ptr);};
+// inline void *acceleratorAllocShared(size_t bytes){return _mm_malloc(bytes,GRID_ALLOC_ALIGN);};
+// inline void *acceleratorAllocDevice(size_t bytes){return _mm_malloc(bytes,GRID_ALLOC_ALIGN);};
+// inline void acceleratorFreeShared(void *ptr){_mm_free(ptr);};
+// inline void acceleratorFreeDevice(void *ptr){_mm_free(ptr);};
+
+inline void *acceleratorAllocShared(size_t bytes){ std::cout << "allocation of " << bytes << " B from acceleratorAllocShared" <<std::endl; return malloc(bytes);};
+inline void *acceleratorAllocDevice(size_t bytes){ std::cout << "allocation of " << bytes << " B from acceleratorAllocDevice" <<std::endl; return malloc(bytes);};
+inline void acceleratorFreeShared(void *ptr){ free(ptr);};
+inline void acceleratorFreeDevice(void *ptr){ free(ptr);};
 #else
-inline void *acceleratorAllocShared(size_t bytes){return memalign(GRID_ALLOC_ALIGN,bytes);};
-inline void *acceleratorAllocDevice(size_t bytes){return memalign(GRID_ALLOC_ALIGN,bytes);};
-inline void acceleratorFreeShared(void *ptr){free(ptr);};
-inline void acceleratorFreeDevice(void *ptr){free(ptr);};
+// inline void *acceleratorAllocShared(size_t bytes){return memalign(GRID_ALLOC_ALIGN,bytes);};
+// inline void *acceleratorAllocDevice(size_t bytes){return memalign(GRID_ALLOC_ALIGN,bytes);};
+// inline void acceleratorFreeShared(void *ptr){free(ptr);};
+// inline void acceleratorFreeDevice(void *ptr){free(ptr);};
+
+inline void *acceleratorAllocShared(size_t bytes){ std::cout << "allocation of " << bytes << " B from acceleratorAllocShared" <<std::endl; return malloc(bytes);};
+inline void *acceleratorAllocDevice(size_t bytes){ std::cout << "allocation of " << bytes << " B from acceleratorAllocDevice" <<std::endl; return malloc(bytes);};
+inline void acceleratorFreeShared(void *ptr){ free(ptr);};
+inline void acceleratorFreeDevice(void *ptr){ free(ptr);};
 #endif
 
 #endif // CPU target
 
 #ifdef HAVE_MM_MALLOC_H
-inline void *acceleratorAllocCpu(size_t bytes){return _mm_malloc(bytes,GRID_ALLOC_ALIGN);};
-inline void acceleratorFreeCpu  (void *ptr){_mm_free(ptr);};
+// inline void *acceleratorAllocCpu(size_t bytes){return _mm_malloc(bytes,GRID_ALLOC_ALIGN);};
+// inline void acceleratorFreeCpu  (void *ptr){_mm_free(ptr);};
+
+inline void *acceleratorAllocCpu(size_t bytes){ std::cout << "allocation of " << bytes << " B from acceleratorAllocCpu" <<std::endl; return malloc(bytes);};
+inline void acceleratorFreeCpu  (void *ptr){ free(ptr);};
 #else
-inline void *acceleratorAllocCpu(size_t bytes){return memalign(GRID_ALLOC_ALIGN,bytes);};
-inline void acceleratorFreeCpu  (void *ptr){free(ptr);};
+// inline void *acceleratorAllocCpu(size_t bytes){return memalign(GRID_ALLOC_ALIGN,bytes);};
+// inline void acceleratorFreeCpu  (void *ptr){free(ptr);};
+
+inline void *acceleratorAllocCpu(size_t bytes){ std::cout << "allocation of " << bytes << " B from acceleratorAllocCpu" <<std::endl; return malloc(bytes);};
+inline void acceleratorFreeCpu  (void *ptr){ free(ptr);};
 #endif
 
 
