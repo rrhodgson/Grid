@@ -953,34 +953,67 @@ void BaryonUtils<FImpl>::BaryonGamma3pt(
 {
     GridBase *grid = q_tf.Grid();
 
-    autoView( vcorr, stn_corr, CpuWrite);
-    autoView( vq_ti , q_ti, CpuRead);
-    autoView( vq_tf , q_tf, CpuRead);
+    // autoView( vcorr, stn_corr, CpuWrite);
+    // autoView( vq_ti , q_ti, CpuRead);
+    // autoView( vq_tf , q_tf, CpuRead);
+
+    // if (group == 1) {
+    //     accelerator_for(ss, grid->oSites(), grid->Nsimd(), {
+    //         auto Dq_ti = vq_ti[ss];
+    //         auto Dq_tf = vq_tf[ss];
+    //         sobj result=Zero();
+    //         BaryonGamma3ptGroup1Site(Dq_ti,Dq_spec1,Dq_spec2,Dq_tf,GammaJ,GammaBi,GammaBf,wick_contraction,result);
+    //         vcorr[ss] += result; 
+    //     });//end loop over lattice sites
+    // } else if (group == 2) {
+    //     accelerator_for(ss, grid->oSites(), grid->Nsimd(), {
+    //         auto Dq_ti = vq_ti[ss];
+    //         auto Dq_tf = vq_tf[ss];
+    //         sobj result=Zero();
+    //         BaryonGamma3ptGroup2Site(Dq_spec1,Dq_ti,Dq_spec2,Dq_tf,GammaJ,GammaBi,GammaBf,wick_contraction,result);
+    //         vcorr[ss] += result; 
+    //     });//end loop over lattice sites
+    // } else if (group == 3) {
+    //     accelerator_for(ss, grid->oSites(), grid->Nsimd(), {
+    //         auto Dq_ti = vq_ti[ss];
+    //         auto Dq_tf = vq_tf[ss];
+    //         sobj result=Zero();
+    //         BaryonGamma3ptGroup3Site(Dq_spec1,Dq_spec2,Dq_ti,Dq_tf,GammaJ,GammaBi,GammaBf,wick_contraction,result);
+
+    //         vcorr[ss] += result; 
+    //     });//end loop over lattice sites
+    // }
+
+    autoView( vcorr , stn_corr , AcceleratorWrite);
+    autoView( vq_ti , q_ti     , AcceleratorRead);
+    autoView( vq_tf , q_tf     , AcceleratorRead);
 
     if (group == 1) {
         accelerator_for(ss, grid->oSites(), grid->Nsimd(), {
-            auto Dq_ti = vq_ti[ss];
-            auto Dq_tf = vq_tf[ss];
+            auto Dq_ti = vq_ti(ss);
+            auto Dq_tf = vq_tf(ss);
             sobj result=Zero();
             BaryonGamma3ptGroup1Site(Dq_ti,Dq_spec1,Dq_spec2,Dq_tf,GammaJ,GammaBi,GammaBf,wick_contraction,result);
-            vcorr[ss] += result; 
+            // vcorr[ss] += result; 
+            coalescedWrite(vcorr[ss],result);
         });//end loop over lattice sites
     } else if (group == 2) {
         accelerator_for(ss, grid->oSites(), grid->Nsimd(), {
-            auto Dq_ti = vq_ti[ss];
-            auto Dq_tf = vq_tf[ss];
+            auto Dq_ti = vq_ti(ss);
+            auto Dq_tf = vq_tf(ss);
             sobj result=Zero();
             BaryonGamma3ptGroup2Site(Dq_spec1,Dq_ti,Dq_spec2,Dq_tf,GammaJ,GammaBi,GammaBf,wick_contraction,result);
-            vcorr[ss] += result; 
+            // vcorr[ss] += result; 
+            coalescedWrite(vcorr[ss],result);
         });//end loop over lattice sites
     } else if (group == 3) {
         accelerator_for(ss, grid->oSites(), grid->Nsimd(), {
-            auto Dq_ti = vq_ti[ss];
-            auto Dq_tf = vq_tf[ss];
+            auto Dq_ti = vq_ti(ss);
+            auto Dq_tf = vq_tf(ss);
             sobj result=Zero();
             BaryonGamma3ptGroup3Site(Dq_spec1,Dq_spec2,Dq_ti,Dq_tf,GammaJ,GammaBi,GammaBf,wick_contraction,result);
-
-            vcorr[ss] += result; 
+            // vcorr[ss] += result; 
+            coalescedWrite(vcorr[ss],result);
         });//end loop over lattice sites
     }
 }
