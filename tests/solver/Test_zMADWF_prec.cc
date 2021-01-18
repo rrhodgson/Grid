@@ -304,13 +304,15 @@ void run(const TestParams &params){
               << std::endl;
 
     LatticeFermionD diff = result_o_MADWF - result_o_outer;
-    std::cout <<GridLogMessage<< "Odd-parity MADWF result norm " << norm2(result_o_MADWF) 
-        << " Regular result norm " << norm2(result_o_outer) 
+    std::cout <<GridLogMessage<< "Odd-parity MADWF result norm " << norm2(result_o_MADWF) << std::endl
+        << " Regular result norm " << norm2(result_o_outer) << std::endl
         << " Norm of diff " << norm2(diff)<<std::endl;
 
 
-    std::cout << GridLogMessage << "######## Dhop calls summary" << std::endl;
+    std::cout << GridLogMessage << "######## Dhop calls summary : outer" << std::endl;
     D_outer.Report();
+    std::cout << GridLogMessage << "######## Dhop calls summary : inner" << std::endl;
+    D_inner.Report();
   }
 }
 
