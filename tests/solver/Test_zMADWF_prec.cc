@@ -33,9 +33,98 @@ directory
 using namespace std;
 using namespace Grid;
 
+
+struct PackRecord
+{
+    std::string operatorXml, solverXml;
+};
+struct VecRecord: Serializable
+{
+    GRID_SERIALIZABLE_CLASS_MEMBERS(VecRecord,
+                                    unsigned int, index,
+                                    double,       eval);
+    VecRecord(void): index(0), eval(0.) {}
+};
+
+inline void readHeader(PackRecord &record, ScidacReader &binReader)
+    {
+        std::string recordXml;
+
+        binReader.readLimeObject(recordXml, SCIDAC_FILE_XML);
+        XmlReader xmlReader(recordXml, true, "eigenPackPar");
+        xmlReader.push();
+        xmlReader.readCurrentSubtree(record.operatorXml);
+        xmlReader.nextElement();
+        xmlReader.readCurrentSubtree(record.solverXml);
+    }
+template <typename T, typename TIo = T>
+void readElement(T &evec, RealD &eval, const unsigned int index,
+                 ScidacReader &binReader, TIo *ioBuf = nullptr)
+{
+    VecRecord vecRecord;
+
+    std::cout << "Reading eigenvector " << index << std::endl;
+    if (ioBuf == nullptr)
+    {
+        binReader.readScidacFieldRecord(evec, vecRecord);
+    }
+    else
+    {
+        binReader.readScidacFieldRecord(*ioBuf, vecRecord);
+        precisionChange(evec, *ioBuf);
+    }
+    if (vecRecord.index != index)
+    {
+        std::cout << "Eigenvector " + std::to_string(index) + " has a"
+                        + " wrong index (expected " + std::to_string(vecRecord.index) 
+                        + ")" << std::endl;
+    }
+    eval = vecRecord.eval;
+}
+
+template <typename T, typename TIo = T>
+static void readPack(std::vector<T> &evec, std::vector<RealD> &eval,
+                     PackRecord &record, const std::string filename, 
+                     const unsigned int size, bool multiFile, 
+                     GridBase *gridIo = nullptr)
+{
+    std::unique_ptr<TIo> ioBuf{nullptr};
+    ScidacReader         binReader;
+
+    if (multiFile)
+    {
+        std::string fullFilename;
+
+        for(int k = 0; k < size; ++k) 
+        {
+            fullFilename = filename + "/v" + std::to_string(k) + ".bin";
+            binReader.open(fullFilename);
+            readHeader(record, binReader);
+            readElement(evec[k], eval[k], k, binReader, ioBuf.get());
+            binReader.close();
+        }
+    }
+    else
+    {
+        binReader.open(filename);
+        readHeader(record, binReader);
+        for(int k = 0; k < size; ++k) 
+        {
+            readElement(evec[k], eval[k], k, binReader, ioBuf.get());
+        }
+        binReader.close();
+    }
+}
+
+
+
+
 struct TestParams{
   bool load_config;
   std::string config_file;
+
+  std::string evec_file;
+
 
   double mass;
 
@@ -61,7 +150,7 @@ struct TestParams{
     Ls_outer(24), b_plus_c_outer(2.0), resid_outer(1e-8), itter_outer(100), 
     Ls_inner(10), b_plus_c_inner(1.0), resid_inner(1e-8), itter_inner(30000), 
     zmobius_inner(true), accept_gammas(false), lambda_max(1.42), 
-    outer_precon("Standard"), inner_precon("Standard"), Nloop(1)
+    outer_precon("Standard"), inner_precon("Standard"), Nloop(1), evec_file("")
   {}
   
   void write(const std::string &file) const{
@@ -84,6 +173,7 @@ struct TestParams{
     DOIT(accept_gammas);
     DOIT(lambda_max);
     DOIT(Nloop);
+    DOIT(evec_file);
 #undef DOIT
   }
   void read(const std::string &file){
@@ -104,6 +194,7 @@ struct TestParams{
     DOIT(accept_gammas);
     DOIT(lambda_max);
     DOIT(Nloop);
+    DOIT(evec_file);
 #undef DOIT
   }
 };
@@ -142,6 +233,7 @@ template<typename RunParamsOuter, typename RunParamsInner>
 void run(const TestParams &params){
 
   std::cout << "Loading config file '" << params.config_file << "'" << std::endl
+            << "Loading evec file '" << params.evec_file << "'" << std::endl
             << "Looping " << params.Nloop << " times" << std::endl
             << "Using    outer Ls = " << params.Ls_outer << std::endl
             << "Using    inner Ls = " << params.Ls_inner << std::endl
@@ -284,8 +376,23 @@ void run(const TestParams &params){
   typename RunParamsInner::SchurSolverType SchurSolver_inner(CG_inner);
 
   ZeroGuesser<LatticeFermion> Guess;
-  MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, ZeroGuesser<LatticeFermion> > 
-        madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, Guess, params.resid_outer, params.itter_outer, &update);
+
+
+  std::vector<ZWilsonImplD::FermionField> evec;
+  std::vector<RealD> eval;
+  PackRecord         record;
+  unsigned int size = 2000;
+  bool multiFile = true;
+
+  readPack<ZWilsonImplD::FermionField, ZWilsonImplF::FermionField>(evec, eval,
+                     record, params.evec_file, 
+                     size, multiFile);
+  DeflatedGuesser<LatticeFermion> difGuess(evec, eval);
+  
+
+
+  MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, DeflatedGuesser<LatticeFermion> > 
+        madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, difGuess, params.resid_outer, params.itter_outer, &update);
   
   LatticeFermionD result_MADWF(FGrid_outer);
 
@@ -334,15 +441,15 @@ int main(int argc, char** argv) {
     }
   }
 
-  if(params.outer_precon == "Standard" && params.inner_precon == "Standard" ){
-    run<RunParamsPrecStd, RunParamsPrecStd>(params);
-  }else if(params.outer_precon == "DiagTwo" && params.inner_precon == "Standard"){
-    run<RunParamsPrecDiagTwo, RunParamsPrecStd>(params);
-  }else if(params.outer_precon == "Standard" && params.inner_precon == "DiagTwo"){
-    run<RunParamsPrecStd, RunParamsPrecDiagTwo>(params);
-  }else if(params.outer_precon == "DiagTwo" && params.inner_precon == "DiagTwo"){
+  // if(params.outer_precon == "Standard" && params.inner_precon == "Standard" ){
+  //   run<RunParamsPrecStd, RunParamsPrecStd>(params);
+  // }else if(params.outer_precon == "DiagTwo" && params.inner_precon == "Standard"){
+  //   run<RunParamsPrecDiagTwo, RunParamsPrecStd>(params);
+  // }else if(params.outer_precon == "Standard" && params.inner_precon == "DiagTwo"){
+  //   run<RunParamsPrecStd, RunParamsPrecDiagTwo>(params);
+  // }else if(params.outer_precon == "DiagTwo" && params.inner_precon == "DiagTwo"){
     run<RunParamsPrecDiagTwo, RunParamsPrecDiagTwo>(params);
-  }else assert(0);
+  // }else assert(0);
 
   Grid_finalize();
 }
