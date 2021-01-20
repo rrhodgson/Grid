@@ -321,23 +321,6 @@ void run(const TestParams &params){
 GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls_inner, UGrid);
 
 
-// TODO: Deflated guesser does NOT live here
-  std::vector<WilsonImplD::FermionField> evec(params.esize, FrbGrid_inner);
-  std::vector<RealD> eval(params.esize);
-  PackRecord         record;
-
-  readPack<WilsonImplD::FermionField, WilsonImplF::FermionField>(evec, eval,
-                     record, params.evec_file, 
-                     params.esize, params.multiFile,
-                     gridIo);
-  std::cout << "epack read" << std::endl;
-  DeflatedGuesser<LatticeFermion> difGuess(evec, eval);
-  std::cout << "deflated guesser constructed" << std::endl;
-
-
-
-
-
   std::vector<int> seeds4({1, 2, 3, 4});
   std::vector<int> seeds5({5, 6, 7, 8});
 
@@ -427,16 +410,29 @@ GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls
 
   typename RunParamsInner::SchurSolverType SchurSolver_inner(CG_inner);
 
-  ZeroGuesser<LatticeFermion> Guess;
+  ZeroGuesser<LatticeFermion> zeroGuess;
 
 
 
-// TODO: Deflated guesser lives here
+  std::vector<WilsonImplD::FermionField> evec(params.esize, FrbGrid_inner);
+  std::vector<RealD> eval(params.esize);
+  PackRecord         record;
+
+  readPack<WilsonImplD::FermionField, WilsonImplF::FermionField>(evec, eval,
+                     record, params.evec_file, 
+                     params.esize, params.multiFile,
+                     gridIo);
+  std::cout << "epack read" << std::endl;
+  DeflatedGuesser<LatticeFermion> difGuess(evec, eval);
+  std::cout << "deflated guesser constructed" << std::endl;
   
 
 
-  MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, DeflatedGuesser<LatticeFermion> > 
-        madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, difGuess, params.resid_outer, params.itter_outer, &update);
+  MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, ZeroGuesser<LatticeFermion> > 
+        madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, zeroGuess, params.resid_outer, params.itter_outer, &update);
+
+  // MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, DeflatedGuesser<LatticeFermion> > 
+  //       madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, difGuess, params.resid_outer, params.itter_outer, &update);
   
   LatticeFermionD result_MADWF(FGrid_outer);
 
