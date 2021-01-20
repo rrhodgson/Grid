@@ -66,12 +66,17 @@ void readElement(T &evec, RealD &eval, const unsigned int index,
     std::cout << "Reading eigenvector " << index << std::endl;
     if (ioBuf == nullptr)
     {
+      std::cout << "ioBuf == nullptr" << std::endl;
         binReader.readScidacFieldRecord(evec, vecRecord);
+      std::cout << "readScidacFieldRecord complete" << std::endl;
     }
     else
     {
+      std::cout << "ioBuf != nullptr" << std::endl;
         binReader.readScidacFieldRecord(*ioBuf, vecRecord);
+      std::cout << "readScidacFieldRecord complete" << std::endl;
         precisionChange(evec, *ioBuf);
+      std::cout << "prec change complete" << std::endl;
     }
     if (vecRecord.index != index)
     {
@@ -80,6 +85,7 @@ void readElement(T &evec, RealD &eval, const unsigned int index,
                         + ")" << std::endl;
     }
     eval = vecRecord.eval;
+      std::cout << "got eval" << std::endl;
 }
 
 template <typename T, typename TIo = T>
