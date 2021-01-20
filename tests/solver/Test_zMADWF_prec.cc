@@ -97,6 +97,15 @@ static void readPack(std::vector<T> &evec, std::vector<RealD> &eval,
     std::unique_ptr<TIo> ioBuf{nullptr};
     ScidacReader         binReader;
 
+    if (std::is_same<T,TIo>::value)
+    {
+        if (gridIo == nullptr)
+        {
+            std::cout << "I/O type different from vector type but null I/O grid passed" << std::endl;
+        }
+        ioBuf.reset(new TIo(gridIo));
+    }
+
     if (multiFile)
     {
       std::cout << "multiFile" << std::endl;
@@ -308,7 +317,7 @@ void run(const TestParams &params){
   GridRedBlackCartesian* FrbGrid_inner = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls_inner, UGrid);
 
 
-
+GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls_inner, UGrid);
 
 
 // TODO: Deflated guesser does NOT live here
@@ -318,7 +327,8 @@ void run(const TestParams &params){
 
   readPack<WilsonImplD::FermionField, WilsonImplF::FermionField>(evec, eval,
                      record, params.evec_file, 
-                     params.esize, params.multiFile);
+                     params.esize, params.multiFile,
+                     gridIo);
   std::cout << "epack read" << std::endl;
   DeflatedGuesser<LatticeFermion> difGuess(evec, eval);
   std::cout << "deflated guesser constructed" << std::endl;
