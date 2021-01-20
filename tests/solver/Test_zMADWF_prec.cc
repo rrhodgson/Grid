@@ -312,7 +312,7 @@ void run(const TestParams &params){
 
 
 // TODO: Deflated guesser does NOT live here
-  std::vector<WilsonImplD::FermionField> evec(params.esize, FrbGrid_outer);
+  std::vector<WilsonImplD::FermionField> evec(params.esize, FrbGrid_inner);
   std::vector<RealD> eval(params.esize);
   PackRecord         record;
 
