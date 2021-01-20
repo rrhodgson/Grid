@@ -124,6 +124,8 @@ struct TestParams{
   std::string config_file;
 
   std::string evec_file;
+  int esize;
+  bool multiFile;
 
 
   double mass;
@@ -150,7 +152,7 @@ struct TestParams{
     Ls_outer(24), b_plus_c_outer(2.0), resid_outer(1e-8), itter_outer(100), 
     Ls_inner(10), b_plus_c_inner(1.0), resid_inner(1e-8), itter_inner(30000), 
     zmobius_inner(true), accept_gammas(false), lambda_max(1.42), 
-    outer_precon("Standard"), inner_precon("Standard"), Nloop(1), evec_file("")
+    outer_precon("Standard"), inner_precon("Standard"), Nloop(1), evec_file(""), esize(1), multiFile(false)
   {}
   
   void write(const std::string &file) const{
@@ -174,6 +176,8 @@ struct TestParams{
     DOIT(lambda_max);
     DOIT(Nloop);
     DOIT(evec_file);
+    DOIT(esize);
+    DOIT(multiFile);
 #undef DOIT
   }
   void read(const std::string &file){
@@ -195,6 +199,8 @@ struct TestParams{
     DOIT(lambda_max);
     DOIT(Nloop);
     DOIT(evec_file);
+    DOIT(esize);
+    DOIT(multiFile);
 #undef DOIT
   }
 };
@@ -245,13 +251,13 @@ void run(const TestParams &params){
   std::vector<ZWilsonImplD::FermionField> evec;
   std::vector<RealD> eval;
   PackRecord         record;
-  unsigned int size = 2000;
-  bool multiFile = true;
 
   readPack<ZWilsonImplD::FermionField, ZWilsonImplF::FermionField>(evec, eval,
                      record, params.evec_file, 
-                     size, multiFile);
+                     params.esize, params.multiFile);
+  std::cout << "epack read" << std::endl;
   DeflatedGuesser<LatticeFermion> difGuess(evec, eval);
+  std::cout << "deflated guesser constructed" << std::endl;
 
 
 
