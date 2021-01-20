@@ -93,26 +93,36 @@ static void readPack(std::vector<T> &evec, std::vector<RealD> &eval,
 
     if (multiFile)
     {
+      std::cout << "multiFile" << std::endl;
         std::string fullFilename;
 
         for(int k = 0; k < size; ++k) 
         {
             fullFilename = filename + "/v" + std::to_string(k) + ".bin";
             binReader.open(fullFilename);
+      std::cout << "file " << k << " opened" << std::endl;
             readHeader(record, binReader);
+      std::cout << "file " << k << " header read" << std::endl;
             readElement(evec[k], eval[k], k, binReader, ioBuf.get());
+      std::cout << "file " << k << " element read" << std::endl;
             binReader.close();
+      std::cout << "file " << k << " closed" << std::endl;
         }
     }
     else
     {
+      std::cout << "singleFile" << std::endl;
         binReader.open(filename);
+      std::cout << "file opened" << std::endl;
         readHeader(record, binReader);
+      std::cout << "header read" << std::endl;
         for(int k = 0; k < size; ++k) 
         {
             readElement(evec[k], eval[k], k, binReader, ioBuf.get());
+      std::cout << "element " << k << " read" << std::endl;
         }
         binReader.close();
+      std::cout << "file closed" << std::endl;
     }
 }
 
