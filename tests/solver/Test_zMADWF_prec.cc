@@ -97,8 +97,9 @@ static void readPack(std::vector<T> &evec, std::vector<RealD> &eval,
     std::unique_ptr<TIo> ioBuf{nullptr};
     ScidacReader         binReader;
 
-    if (std::is_same<T,TIo>::value)
+    if (std::is_same<T,TIo>::value == false)
     {
+        std::cout << "load type != use type" << std::endl;
         if (gridIo == nullptr)
         {
             std::cout << "I/O type different from vector type but null I/O grid passed" << std::endl;
