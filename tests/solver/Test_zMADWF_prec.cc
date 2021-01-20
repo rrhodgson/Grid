@@ -263,19 +263,6 @@ void run(const TestParams &params){
             << "Using itter inner = " << params.itter_inner << std::endl
             << "Using itter outer = " << params.itter_outer << std::endl;
 
-// TODO: Deflated guesser does NOT live here
-  std::vector<WilsonImplD::FermionField> evec;
-  std::vector<RealD> eval;
-  PackRecord         record;
-
-  readPack<WilsonImplD::FermionField, WilsonImplD::FermionField>(evec, eval,
-                     record, params.evec_file, 
-                     params.esize, params.multiFile);
-  std::cout << "epack read" << std::endl;
-  DeflatedGuesser<LatticeFermion> difGuess(evec, eval);
-  std::cout << "deflated guesser constructed" << std::endl;
-
-
 
   RealD bmc = 1.0; //use Shamir kernel
   std::vector<ComplexD> gamma_inner;
@@ -319,6 +306,25 @@ void run(const TestParams &params){
 
   GridRedBlackCartesian* FrbGrid_outer = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls_outer, UGrid);
   GridRedBlackCartesian* FrbGrid_inner = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls_inner, UGrid);
+
+
+
+
+
+// TODO: Deflated guesser does NOT live here
+  std::vector<WilsonImplD::FermionField> evec(params.esize, FrbGrid_outer);
+  std::vector<RealD> eval(params.esize);
+  PackRecord         record;
+
+  readPack<WilsonImplD::FermionField, WilsonImplD::FermionField>(evec, eval,
+                     record, params.evec_file, 
+                     params.esize, params.multiFile);
+  std::cout << "epack read" << std::endl;
+  DeflatedGuesser<LatticeFermion> difGuess(evec, eval);
+  std::cout << "deflated guesser constructed" << std::endl;
+
+
+
 
 
   std::vector<int> seeds4({1, 2, 3, 4});
