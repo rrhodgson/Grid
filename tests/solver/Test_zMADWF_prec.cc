@@ -248,11 +248,11 @@ void run(const TestParams &params){
             << "Using itter outer = " << params.itter_outer << std::endl;
 
 // TODO: Deflated guesser does NOT live here
-  std::vector<ZWilsonImplD::FermionField> evec;
+  std::vector<WilsonImplD::FermionField> evec;
   std::vector<RealD> eval;
   PackRecord         record;
 
-  readPack<ZWilsonImplD::FermionField, ZWilsonImplF::FermionField>(evec, eval,
+  readPack<WilsonImplD::FermionField, WilsonImplF::FermionField>(evec, eval,
                      record, params.evec_file, 
                      params.esize, params.multiFile);
   std::cout << "epack read" << std::endl;
