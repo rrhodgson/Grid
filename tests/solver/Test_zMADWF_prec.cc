@@ -241,6 +241,19 @@ void run(const TestParams &params){
             << "Using itter inner = " << params.itter_inner << std::endl
             << "Using itter outer = " << params.itter_outer << std::endl;
 
+// TODO: Deflated guesser does NOT live here
+  std::vector<ZWilsonImplD::FermionField> evec;
+  std::vector<RealD> eval;
+  PackRecord         record;
+  unsigned int size = 2000;
+  bool multiFile = true;
+
+  readPack<ZWilsonImplD::FermionField, ZWilsonImplF::FermionField>(evec, eval,
+                     record, params.evec_file, 
+                     size, multiFile);
+  DeflatedGuesser<LatticeFermion> difGuess(evec, eval);
+
+
 
   RealD bmc = 1.0; //use Shamir kernel
   std::vector<ComplexD> gamma_inner;
@@ -378,16 +391,8 @@ void run(const TestParams &params){
   ZeroGuesser<LatticeFermion> Guess;
 
 
-  std::vector<ZWilsonImplD::FermionField> evec;
-  std::vector<RealD> eval;
-  PackRecord         record;
-  unsigned int size = 2000;
-  bool multiFile = true;
 
-  readPack<ZWilsonImplD::FermionField, ZWilsonImplF::FermionField>(evec, eval,
-                     record, params.evec_file, 
-                     size, multiFile);
-  DeflatedGuesser<LatticeFermion> difGuess(evec, eval);
+// TODO: Deflated guesser lives here
   
 
 
