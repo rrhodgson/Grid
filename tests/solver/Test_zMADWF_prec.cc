@@ -252,7 +252,7 @@ void run(const TestParams &params){
   std::vector<RealD> eval;
   PackRecord         record;
 
-  readPack<WilsonImplD::FermionField, WilsonImplF::FermionField>(evec, eval,
+  readPack<WilsonImplD::FermionField, WilsonImplD::FermionField>(evec, eval,
                      record, params.evec_file, 
                      params.esize, params.multiFile);
   std::cout << "epack read" << std::endl;
