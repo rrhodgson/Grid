@@ -374,6 +374,42 @@ GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls
   }
     
   
+// ==================================================================================================
+  // MobiusFermionD D_outer_Mob(Umu, *FGrid_outer, *FrbGrid_outer, *UGrid, *UrbGrid, params.mass, M5, b_outer, c_outer);
+  // //Solve using a regular even-odd preconditioned CG for the Hermitian operator
+  // //M y = x
+  // //Mprec y'_o = x'_o     where Mprec = Doo - Doe Dee^-1 Deo    and  x'_o = -Doe Dee^-1 x_e + x_o
+  // //y_o = y'_o
+
+  // //(Mprec^dag Mprec) y'_o = Mprec^dag x'_o 
+  // //y'_o = (Mprec^dag Mprec)^-1 Mprec^dag x'_o 
+
+  // //We can get Mprec^dag x'_o from x_o  from SchurRedBlackDiagMooeeSolve::RedBlackSource
+  // ConjugateGradient<LatticeFermionD> CG_outer_Mob(params.resid_outer, params.itter_inner);
+  // typename RunParamsOuter::SchurSolverType SchurSolver_outer_Mob(CG_outer_Mob);
+
+  // LatticeFermionD tmp_e_outer(FrbGrid_outer);
+  // LatticeFermionD src_o_outer(FrbGrid_outer);
+  // SchurSolver_outer_Mob.RedBlackSource(D_outer_Mob, src_outer, tmp_e_outer, src_o_outer);
+  
+  // LatticeFermionD result_o_outer(FrbGrid_outer);
+  // result_o_outer = Zero();
+
+  // GridStopWatch CGTimer;
+  
+  // typename RunParamsOuter::template HermOpType<MobiusFermionD> HermOpEO_outer(D_outer_Mob);
+
+  // CGTimer.Start();
+  // CG_outer_Mob(HermOpEO_outer, src_o_outer, result_o_outer);
+  // CGTimer.Stop();
+
+  // std::cout << GridLogMessage << "Total outer CG time : " << CGTimer.Elapsed()
+  //           << std::endl;
+
+  // CGTimer.Reset();
+
+// ==================================================================================================
+
 
   MobiusFermionD D_outer(Umu, *FGrid_outer, *FrbGrid_outer, *UGrid, *UrbGrid, params.mass, M5, b_outer, c_outer);
   ZMobiusFermionD D_inner(Umu, *FGrid_inner, *FrbGrid_inner, *UGrid, *UrbGrid, params.mass, M5, gamma_inner, b_inner, c_inner);
@@ -381,37 +417,6 @@ GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls
   LatticeFermionD src_outer(FGrid_outer);
   D_outer.ImportPhysicalFermionSource(src4,src_outer); //applies D_- 
 
-  //Solve using a regular even-odd preconditioned CG for the Hermitian operator
-  //M y = x
-  //Mprec y'_o = x'_o     where Mprec = Doo - Doe Dee^-1 Deo    and  x'_o = -Doe Dee^-1 x_e + x_o
-  //y_o = y'_o
-
-  //(Mprec^dag Mprec) y'_o = Mprec^dag x'_o 
-  //y'_o = (Mprec^dag Mprec)^-1 Mprec^dag x'_o 
-
-  //We can get Mprec^dag x'_o from x_o  from SchurRedBlackDiagMooeeSolve::RedBlackSource
-  ConjugateGradient<LatticeFermionD> CG_outer(params.resid_outer, params.itter_inner);
-  typename RunParamsOuter::SchurSolverType SchurSolver_outer(CG_outer);
-  
-  LatticeFermionD tmp_e_outer(FrbGrid_outer);
-  LatticeFermionD src_o_outer(FrbGrid_outer);
-  SchurSolver_outer.RedBlackSource(D_outer, src_outer, tmp_e_outer, src_o_outer);
-  
-  LatticeFermionD result_o_outer(FrbGrid_outer);
-  result_o_outer = Zero();
-
-  GridStopWatch CGTimer;
-  
-  typename RunParamsOuter::template HermOpType<MobiusFermionD> HermOpEO_outer(D_outer);
-
-  CGTimer.Start();
-  CG_outer(HermOpEO_outer, src_o_outer, result_o_outer);
-  CGTimer.Stop();
-
-  std::cout << GridLogMessage << "Total outer CG time : " << CGTimer.Elapsed()
-            << std::endl;
-
-  CGTimer.Reset();
 
   //Solve for y using MADWF with internal preconditioning
 
@@ -435,7 +440,12 @@ GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls
   for (int k=0; k<params.Nloop; k++) {
     std::cout << std::endl << "=========================== Loop k = " << k << " ===========================" << std::endl << std::endl;
   
+
+  ConjugateGradient<LatticeFermionD> CG_outer(params.resid_outer, params.itter_inner);
+  typename RunParamsOuter::SchurSolverType SchurSolver_outer(CG_outer);
   
+  
+
   //typedef PauliVillarsSolverRBprec<LatticeFermionD, typename RunParamsOuter::SchurSolverType> PVtype;
   //PVtype PV_outer(SchurSolver_outer);
 
@@ -461,6 +471,7 @@ GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls
 
     result_MADWF = Zero();
 
+  GridStopWatch CGTimer;
     CGTimer.Start();
     madwf(src4, result_MADWF);
     CGTimer.Stop();
@@ -471,10 +482,11 @@ GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls
     std::cout << GridLogMessage << "Total MADWF time : " << CGTimer.Elapsed()
               << std::endl;
 
-    LatticeFermionD diff = result_o_MADWF - result_o_outer;
+    // LatticeFermionD diff = result_o_MADWF - result_o_outer;
     std::cout <<GridLogMessage<< "Odd-parity MADWF result norm " << norm2(result_o_MADWF) << std::endl
-        << " Regular result norm " << norm2(result_o_outer) << std::endl
-        << " Norm of diff " << norm2(diff)<<std::endl;
+        // << " Regular result norm " << norm2(result_o_outer) << std::endl
+        // << " Norm of diff " << norm2(diff)<<std::endl;
+        << "" << std::endl;
 
 
     std::cout << GridLogMessage << "######## Dhop calls summary : outer" << std::endl;
