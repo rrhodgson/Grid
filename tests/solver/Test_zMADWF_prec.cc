@@ -427,14 +427,10 @@ GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls
 
   typename RunParamsInner::SchurSolverType SchurSolver_inner(CG_inner);
 
-
-
-  
-
+// Zero Guesser 
   ZeroGuesser<LatticeFermion> zeroGuess;
-  MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, ZeroGuesser<LatticeFermion> > 
-        madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, zeroGuess, params.resid_outer, params.itter_outer, &update);
 
+// Deflated Guesser
   // std::vector<WilsonImplD::FermionField> evec(params.esize, FrbGrid_inner);
   // std::vector<RealD> eval(params.esize);
   // PackRecord         record;
@@ -446,13 +442,21 @@ GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls
   // std::cout << "epack read" << std::endl;
   // DeflatedGuesser<LatticeFermion> difGuess(evec, eval);
   // std::cout << "deflated guesser constructed" << std::endl;
-  // MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, DeflatedGuesser<LatticeFermion> > 
-  //       madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, difGuess, params.resid_outer, params.itter_outer, &update);
-  
-  LatticeFermionD result_MADWF(FGrid_outer);
+
 
   for (int k=0; k<params.Nloop; k++) {
     std::cout << std::endl << "=========================== Loop k = " << k << " ===========================" << std::endl << std::endl;
+  
+
+  MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, ZeroGuesser<LatticeFermion> > 
+        madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, zeroGuess, params.resid_outer, params.itter_outer, &update);
+
+  
+  // MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, DeflatedGuesser<LatticeFermion> > 
+  //       madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, difGuess, params.resid_outer, params.itter_outer, &update);
+  
+    LatticeFermionD result_MADWF(FGrid_outer);
+
     result_MADWF = Zero();
 
     CGTimer.Start();
