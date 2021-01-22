@@ -415,18 +415,6 @@ GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls
 
   //Solve for y using MADWF with internal preconditioning
 
-  //typedef PauliVillarsSolverRBprec<LatticeFermionD, typename RunParamsOuter::SchurSolverType> PVtype;
-  //PVtype PV_outer(SchurSolver_outer);
-
-  typedef PauliVillarsSolverFourierAccel<LatticeFermionD, LatticeGaugeFieldD> PVtype;
-  PVtype PV_outer(Umu, CG_outer);
-
-  ConjugateGradient<LatticeFermionD> CG_inner(params.resid_inner, params.itter_inner, 0);
-
-  CGincreaseTol update(CG_inner, params.resid_outer);
-
-  typename RunParamsInner::SchurSolverType SchurSolver_inner(CG_inner);
-
 // Zero Guesser 
   ZeroGuesser<LatticeFermion> zeroGuess;
 
@@ -447,6 +435,20 @@ GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls
   for (int k=0; k<params.Nloop; k++) {
     std::cout << std::endl << "=========================== Loop k = " << k << " ===========================" << std::endl << std::endl;
   
+  
+  //typedef PauliVillarsSolverRBprec<LatticeFermionD, typename RunParamsOuter::SchurSolverType> PVtype;
+  //PVtype PV_outer(SchurSolver_outer);
+
+  typedef PauliVillarsSolverFourierAccel<LatticeFermionD, LatticeGaugeFieldD> PVtype;
+  PVtype PV_outer(Umu, CG_outer);
+
+  ConjugateGradient<LatticeFermionD> CG_inner(params.resid_inner, params.itter_inner, 0);
+
+  CGincreaseTol update(CG_inner, params.resid_outer);
+
+  typename RunParamsInner::SchurSolverType SchurSolver_inner(CG_inner);
+
+
 
   MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, ZeroGuesser<LatticeFermion> > 
         madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, zeroGuess, params.resid_outer, params.itter_outer, &update);
