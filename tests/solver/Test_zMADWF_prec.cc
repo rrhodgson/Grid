@@ -116,29 +116,20 @@ static void readPack(std::vector<T> &evec, std::vector<RealD> &eval,
         {
             fullFilename = filename + "/v" + std::to_string(k) + ".bin";
             binReader.open(fullFilename);
-      std::cout << "file " << k << " opened" << std::endl;
             readHeader(record, binReader);
-      std::cout << "file " << k << " header read" << std::endl;
             readElement(evec[k], eval[k], k, binReader, ioBuf.get());
-      std::cout << "file " << k << " element read" << std::endl;
             binReader.close();
-      std::cout << "file " << k << " closed" << std::endl;
         }
     }
     else
     {
-      std::cout << "singleFile" << std::endl;
         binReader.open(filename);
-      std::cout << "file opened" << std::endl;
         readHeader(record, binReader);
-      std::cout << "header read" << std::endl;
         for(int k = 0; k < size; ++k) 
         {
             readElement(evec[k], eval[k], k, binReader, ioBuf.get());
-      std::cout << "element " << k << " read" << std::endl;
         }
         binReader.close();
-      std::cout << "file closed" << std::endl;
     }
 }
 
@@ -172,13 +163,14 @@ struct TestParams{
   bool accept_gammas;
   double lambda_max; //upper bound of H_T eigenvalue range required to generate zMobius approximation
 
-  int Nloop;
+  double boundary_t;
+
   
   TestParams(): load_config(true), config_file("ckpoint_lat.1000"), mass(0.01),
     Ls_outer(24), b_plus_c_outer(2.0), resid_outer(1e-8), itter_outer(100), 
     Ls_inner(10), b_plus_c_inner(1.0), resid_inner(1e-8), itter_inner(30000), 
     zmobius_inner(true), accept_gammas(false), lambda_max(1.42), 
-    outer_precon("Standard"), inner_precon("Standard"), Nloop(1), evec_file(""), esize(1), multiFile(false)
+    outer_precon("Standard"), inner_precon("Standard"), evec_file(""), esize(1), multiFile(false), boundary_t(-1.)
   {}
   
   void write(const std::string &file) const{
@@ -200,10 +192,10 @@ struct TestParams{
     DOIT(zmobius_inner);
     DOIT(accept_gammas);
     DOIT(lambda_max);
-    DOIT(Nloop);
     DOIT(evec_file);
     DOIT(esize);
     DOIT(multiFile);
+    DOIT(boundary_t);
 #undef DOIT
   }
   void read(const std::string &file){
@@ -223,10 +215,10 @@ struct TestParams{
     DOIT(zmobius_inner);
     DOIT(accept_gammas);
     DOIT(lambda_max);
-    DOIT(Nloop);
     DOIT(evec_file);
     DOIT(esize);
     DOIT(multiFile);
+    DOIT(boundary_t);
 #undef DOIT
   }
 };
@@ -274,7 +266,6 @@ void run(const TestParams &params){
 
   std::cout << "Loading config file '" << params.config_file << "'" << std::endl
             << "Loading evec file '" << params.evec_file << "'" << std::endl
-            << "Looping " << params.Nloop << " times" << std::endl
             << "Using    outer Ls = " << params.Ls_outer << std::endl
             << "Using    inner Ls = " << params.Ls_inner << std::endl
             << "Using        mass = " << params.mass << std::endl
@@ -287,16 +278,29 @@ void run(const TestParams &params){
 
   if (params.accept_gammas) {
     std::cout << "Accept parameters" << std::endl;
-    gamma_inner.push_back(ComplexD(1.458064389850479e+00,-0.000000000000000e+00));
-    gamma_inner.push_back(ComplexD(1.182313183893475e+00,-0.000000000000000e+00));
-    gamma_inner.push_back(ComplexD(8.309511666859551e-01,-0.000000000000000e+00));
-    gamma_inner.push_back(ComplexD(5.423524091567911e-01,-0.000000000000000e+00));
-    gamma_inner.push_back(ComplexD(3.419850204537295e-01,-0.000000000000000e+00));
-    gamma_inner.push_back(ComplexD(2.113790261902896e-01,-0.000000000000000e+00));
-    gamma_inner.push_back(ComplexD(1.260742995029118e-01,-0.000000000000000e+00));
-    gamma_inner.push_back(ComplexD(9.901366519626265e-02,-0.000000000000000e+00));
-    gamma_inner.push_back(ComplexD(6.863249884465925e-02, 5.506585308274019e-02));
-    gamma_inner.push_back(ComplexD(6.863249884465925e-02,-5.506585308274019e-02));
+    // gamma_inner.push_back(ComplexD(1.458064389850479e+00,-0.000000000000000e+00));
+    // gamma_inner.push_back(ComplexD(1.182313183893475e+00,-0.000000000000000e+00));
+    // gamma_inner.push_back(ComplexD(8.309511666859551e-01,-0.000000000000000e+00));
+    // gamma_inner.push_back(ComplexD(5.423524091567911e-01,-0.000000000000000e+00));
+    // gamma_inner.push_back(ComplexD(3.419850204537295e-01,-0.000000000000000e+00));
+    // gamma_inner.push_back(ComplexD(2.113790261902896e-01,-0.000000000000000e+00));
+    // gamma_inner.push_back(ComplexD(1.260742995029118e-01,-0.000000000000000e+00));
+    // gamma_inner.push_back(ComplexD(9.901366519626265e-02,-0.000000000000000e+00));
+    // gamma_inner.push_back(ComplexD(6.863249884465925e-02, 5.506585308274019e-02));
+    // gamma_inner.push_back(ComplexD(6.863249884465925e-02,-5.506585308274019e-02));
+
+
+    gamma_inner.push_back(ComplexD(1.45806438985048,0));
+    gamma_inner.push_back(ComplexD(1.18231318389348,0));
+    gamma_inner.push_back(ComplexD(0.830951166685955,0));
+    gamma_inner.push_back(ComplexD(0.542352409156791,0));
+    gamma_inner.push_back(ComplexD(0.341985020453729,0));
+    gamma_inner.push_back(ComplexD(0.21137902619029,0));
+    gamma_inner.push_back(ComplexD(0.126074299502912,0));
+    gamma_inner.push_back(ComplexD(0.0990136651962626,0)); 
+    gamma_inner.push_back(ComplexD(0.0686324988446592,0.0550658530827402));
+    gamma_inner.push_back(ComplexD(0.0686324988446592,-0.0550658530827402));
+
   } else {
     std::cout << "Compute parameters" << std::endl;
     if(params.zmobius_inner){
@@ -329,8 +333,7 @@ void run(const TestParams &params){
 
 
 
-
-
+  // Create Grids
   GridCartesian* UGrid = SpaceTimeGrid::makeFourDimGrid(
       GridDefaultLatt(), GridDefaultSimd(Nd, vComplexD::Nsimd()),
       GridDefaultMpi());
@@ -344,24 +347,27 @@ void run(const TestParams &params){
   GridRedBlackCartesian* FrbGrid_inner = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls_inner, UGrid);
 
 
-GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls_inner, UGrid);
+  GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls_inner, UGrid);
 
 
+  // Create source
   std::vector<int> seeds4({1, 2, 3, 4});
-  std::vector<int> seeds5({5, 6, 7, 8});
-
-  GridParallelRNG RNG5_outer(FGrid_outer);
-  RNG5_outer.SeedFixedIntegers(seeds5);
 
   GridParallelRNG RNG4(UGrid);
   RNG4.SeedFixedIntegers(seeds4);
 
-  LatticeFermionD src4(UGrid); random(RNG4,src4);
+  LatticeFermionD src4(UGrid); 
+  src4 = Zero();
+  random(RNG4,src4);
+  // Coordinate c(std::vector<int>({0,0,0,0}));
+  // iScalar<iVector<iVector<ComplexD, 3>, 4> > s;
+  // s = 1.;
+  // pokeSite(s, src4, c);
 
-  LatticeFermionD result_outer(FGrid_outer);
-  result_outer = Zero();
+
+
+  // Get/make Gauge field
   LatticeGaugeFieldD Umu(UGrid);
-
   if(params.load_config){
     FieldMetaData header;
     NerscIO::readConfiguration(Umu, header, params.config_file);
@@ -373,127 +379,152 @@ GridRedBlackCartesian* gridIo = SpaceTimeGrid::makeFiveDimRedBlackGrid(params.Ls
     SU<Nc>::HotConfiguration(RNG4, Umu);
   }
     
-  
-// ==================================================================================================
-  // MobiusFermionD D_outer_Mob(Umu, *FGrid_outer, *FrbGrid_outer, *UGrid, *UrbGrid, params.mass, M5, b_outer, c_outer);
-  // //Solve using a regular even-odd preconditioned CG for the Hermitian operator
-  // //M y = x
-  // //Mprec y'_o = x'_o     where Mprec = Doo - Doe Dee^-1 Deo    and  x'_o = -Doe Dee^-1 x_e + x_o
-  // //y_o = y'_o
-
-  // //(Mprec^dag Mprec) y'_o = Mprec^dag x'_o 
-  // //y'_o = (Mprec^dag Mprec)^-1 Mprec^dag x'_o 
-
-  // //We can get Mprec^dag x'_o from x_o  from SchurRedBlackDiagMooeeSolve::RedBlackSource
-  // ConjugateGradient<LatticeFermionD> CG_outer_Mob(params.resid_outer, params.itter_inner);
-  // typename RunParamsOuter::SchurSolverType SchurSolver_outer_Mob(CG_outer_Mob);
-
-  // LatticeFermionD tmp_e_outer(FrbGrid_outer);
-  // LatticeFermionD src_o_outer(FrbGrid_outer);
-  // SchurSolver_outer_Mob.RedBlackSource(D_outer_Mob, src_outer, tmp_e_outer, src_o_outer);
-  
-  // LatticeFermionD result_o_outer(FrbGrid_outer);
-  // result_o_outer = Zero();
-
-  // GridStopWatch CGTimer;
-  
-  // typename RunParamsOuter::template HermOpType<MobiusFermionD> HermOpEO_outer(D_outer_Mob);
-
-  // CGTimer.Start();
-  // CG_outer_Mob(HermOpEO_outer, src_o_outer, result_o_outer);
-  // CGTimer.Stop();
-
-  // std::cout << GridLogMessage << "Total outer CG time : " << CGTimer.Elapsed()
-  //           << std::endl;
-
-  // CGTimer.Reset();
-
-// ==================================================================================================
 
 
-  MobiusFermionD D_outer(Umu, *FGrid_outer, *FrbGrid_outer, *UGrid, *UrbGrid, params.mass, M5, b_outer, c_outer);
-  ZMobiusFermionD D_inner(Umu, *FGrid_inner, *FrbGrid_inner, *UGrid, *UrbGrid, params.mass, M5, gamma_inner, b_inner, c_inner);
+
+
+
+
+
+
+
+
+  WilsonImplParams implParams;
+  implParams.boundary_phases[3] = params.boundary_t;
+  std::cout << implParams.boundary_phases << std::endl;
+
+  MobiusFermionD  D_outer(Umu, *FGrid_outer, *FrbGrid_outer, *UGrid, *UrbGrid, params.mass, M5,              b_outer, c_outer, implParams);
+  ZMobiusFermionD D_inner(Umu, *FGrid_inner, *FrbGrid_inner, *UGrid, *UrbGrid, params.mass, M5, gamma_inner, b_inner, c_inner, implParams);
 
   LatticeFermionD src_outer(FGrid_outer);
   D_outer.ImportPhysicalFermionSource(src4,src_outer); //applies D_- 
 
+  LatticeFermionD result_Mob(FGrid_outer);
+  LatticeFermionD result_Mob_MADWF(FGrid_outer);
+  LatticeFermionD result_diff(FGrid_outer);
 
-  //Solve for y using MADWF with internal preconditioning
 
-// Zero Guesser 
+  GridStopWatch CGTimer;
+  GridStopWatch CGTimer_MADWF;
+
+{
+  // Regular Mobuis solve
+
+  // Setup outer correction CG
+  ConjugateGradient<LatticeFermionD> CG_outer_correction(params.resid_outer, params.itter_inner);
+  typename RunParamsOuter::SchurSolverType SchurSolver_outer(CG_outer_correction, false, true);
+
   ZeroGuesser<LatticeFermion> zeroGuess;
 
-// Deflated Guesser
-  // std::vector<WilsonImplD::FermionField> evec(params.esize, FrbGrid_inner);
-  // std::vector<RealD> eval(params.esize);
-  // PackRecord         record;
+  result_Mob = Zero();
 
-  // readPack<WilsonImplD::FermionField, WilsonImplF::FermionField>(evec, eval,
-  //                    record, params.evec_file, 
-  //                    params.esize, params.multiFile,
-  //                    gridIo);
-  // std::cout << "epack read" << std::endl;
-  // DeflatedGuesser<LatticeFermion> difGuess(evec, eval);
-  // std::cout << "deflated guesser constructed" << std::endl;
+    CGTimer.Start();
+  SchurSolver_outer(D_outer, src_outer, result_Mob, zeroGuess);
 
+    CGTimer.Stop();
+}
 
-  for (int k=0; k<params.Nloop; k++) {
-    std::cout << std::endl << "=========================== Loop k = " << k << " ===========================" << std::endl << std::endl;
-  
+{
+  // MADWF
 
+  // Create Outer PV_CG
   ConjugateGradient<LatticeFermionD> CG_outer(params.resid_outer, params.itter_inner);
-  typename RunParamsOuter::SchurSolverType SchurSolver_outer(CG_outer);
-  
-  
+  // typedef PauliVillarsSolverFourierAccel<LatticeFermionD, LatticeGaugeFieldD> PVtype;
+  // PVtype PV_outer(Umu, CG_outer);
 
-  //typedef PauliVillarsSolverRBprec<LatticeFermionD, typename RunParamsOuter::SchurSolverType> PVtype;
-  //PVtype PV_outer(SchurSolver_outer);
+  // typedef PauliVillarsSolverUnprec<LatticeFermionD> PVtype;
+  // PVtype PV_outer(CG_outer);
+  typename RunParamsOuter::SchurSolverType PV_SchurSolver_outer(CG_outer);
+  typedef PauliVillarsSolverRBprec<LatticeFermionD,typename RunParamsOuter::SchurSolverType> PVtype;
+  PVtype PV_outer(PV_SchurSolver_outer);
 
-  typedef PauliVillarsSolverFourierAccel<LatticeFermionD, LatticeGaugeFieldD> PVtype;
-  PVtype PV_outer(Umu, CG_outer);
-
+  // Create Inner Shur_CG
   ConjugateGradient<LatticeFermionD> CG_inner(params.resid_inner, params.itter_inner, 0);
+  typename RunParamsInner::SchurSolverType SchurSolver_inner(CG_inner);
 
   CGincreaseTol update(CG_inner, params.resid_outer);
 
-  typename RunParamsInner::SchurSolverType SchurSolver_inner(CG_inner);
+
+  // Create Results container
+  result_Mob_MADWF = Zero();
 
 
+  if (params.evec_file.empty()) {
+    // Zero Guesser 
+    ZeroGuesser<LatticeFermion> zeroGuess;
 
-  MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, ZeroGuesser<LatticeFermion> > 
+    // Create MADWF
+    MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, ZeroGuesser<LatticeFermion> > 
         madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, zeroGuess, params.resid_outer, params.itter_outer, &update);
 
-  
-  // MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, DeflatedGuesser<LatticeFermion> > 
-  //       madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, difGuess, params.resid_outer, params.itter_outer, &update);
-  
-    LatticeFermionD result_MADWF(FGrid_outer);
 
-    result_MADWF = Zero();
+    // Run MADWF
+    CGTimer_MADWF.Start();
+    madwf(src_outer, result_Mob_MADWF);
+    // madwf(src4, result_Mob_MADWF);
+    CGTimer_MADWF.Stop();
 
-  GridStopWatch CGTimer;
-    CGTimer.Start();
-    madwf(src4, result_MADWF);
-    CGTimer.Stop();
+  } else {
+    // Deflated Guesser
+    std::vector<WilsonImplD::FermionField> evec(params.esize, FrbGrid_inner);
+    std::vector<RealD> eval(params.esize);
+    PackRecord         record;
 
-    LatticeFermionD result_o_MADWF(FrbGrid_outer);
-    pickCheckerboard(Odd, result_o_MADWF, result_MADWF);
-
-    std::cout << GridLogMessage << "Total MADWF time : " << CGTimer.Elapsed()
-              << std::endl;
-
-    // LatticeFermionD diff = result_o_MADWF - result_o_outer;
-    std::cout <<GridLogMessage<< "Odd-parity MADWF result norm " << norm2(result_o_MADWF) << std::endl
-        // << " Regular result norm " << norm2(result_o_outer) << std::endl
-        // << " Norm of diff " << norm2(diff)<<std::endl;
-        << "" << std::endl;
+    readPack<WilsonImplD::FermionField, WilsonImplD::FermionField>(evec, eval,
+                       record, params.evec_file, 
+                       params.esize, params.multiFile,
+                       gridIo);
+    DeflatedGuesser<LatticeFermion> difGuess(evec, eval);
 
 
-    std::cout << GridLogMessage << "######## Dhop calls summary : outer" << std::endl;
-    D_outer.Report();
-    std::cout << GridLogMessage << "######## Dhop calls summary : inner" << std::endl;
-    D_inner.Report();
+    // Create MADWF
+    MADWF<MobiusFermionD, ZMobiusFermionD, PVtype, typename RunParamsInner::SchurSolverType, DeflatedGuesser<LatticeFermion> > 
+        madwf(D_outer, D_inner, PV_outer, SchurSolver_inner, difGuess,  params.resid_outer, params.itter_outer, &update);
+
+
+    // Run MADWF
+    CGTimer_MADWF.Start();
+    madwf(src_outer, result_Mob_MADWF);
+    // madwf(src4, result_Mob_MADWF);
+    CGTimer_MADWF.Stop();
   }
+
+
+  result_diff = result_Mob - result_Mob_MADWF;
+  std::cout << GridLogMessage<< "MADWF (pre correction)  result norm " << norm2(result_Mob_MADWF) << std::endl
+            << GridLogMessage<< "Mobius result norm " << norm2(result_Mob) << std::endl
+            << GridLogMessage<< "diff result norm   " << norm2(result_diff) << std::endl
+            << std::endl;
+
+
+  // Setup outer correction CG
+  ConjugateGradient<LatticeFermionD> CG_outer_correction(params.resid_outer, params.itter_inner);
+  typename RunParamsOuter::SchurSolverType SchurSolver_outer(CG_outer, false, true);
+
+
+  SchurSolver_outer(D_outer, src_outer, result_Mob_MADWF);
+}
+
+  result_diff = result_Mob - result_Mob_MADWF;
+
+
+  std::cout << GridLogMessage << "Total MADWF time  : " << CGTimer_MADWF.Elapsed()
+            << std::endl;
+  std::cout << GridLogMessage << "Total Mobius time : " << CGTimer.Elapsed()
+            << std::endl;
+
+  std::cout << GridLogMessage<< "MADWF  result norm " << norm2(result_Mob_MADWF) << std::endl
+            << GridLogMessage<< "Mobius result norm " << norm2(result_Mob) << std::endl
+            << GridLogMessage<< "diff result norm   " << norm2(result_diff) << std::endl
+      << "" << std::endl;
+
+
+  // std::cout << GridLogMessage << "######## Dhop calls summary : outer" << std::endl;
+  // D_outer.Report();
+  // std::cout << GridLogMessage << "######## Dhop calls summary : inner" << std::endl;
+  // D_inner.Report();
+
+
 }
 
 
