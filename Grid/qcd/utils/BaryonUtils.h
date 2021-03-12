@@ -164,7 +164,8 @@ public:
              const mobj2 &Du_spec,
              const mobj &Dd_tf,
              const mobj &Ds_ti,
-             const Gamma Gamma_H,
+             const Gamma Gamma_H1,
+             const Gamma Gamma_H2,
              const Gamma GammaB_sigma,
              const Gamma GammaB_nucl,
              robj &result);
@@ -174,7 +175,8 @@ public:
              const mobj2 &Du_spec,
              const mobj &Dd_tf,
              const mobj &Ds_ti,
-             const Gamma Gamma_H,
+             const Gamma Gamma_H1,
+             const Gamma Gamma_H2,
              const Gamma GammaB_sigma,
              const Gamma GammaB_nucl,
              robj &result);
@@ -185,7 +187,8 @@ public:
              const mobj2 &Du_spec,
              const mobj &Dd_tf,
              const mobj &Ds_ti,
-             const Gamma Gamma_H,
+             const Gamma Gamma_H1,
+             const Gamma Gamma_H2,
              const Gamma GammaB_sigma,
              const Gamma GammaB_nucl,
              robj &result);
@@ -195,7 +198,8 @@ public:
 	     const mobj2 &Du_spec,
 	     const mobj &Dd_tf,
 	     const mobj &Ds_ti,
-	     const Gamma Gamma_H,
+       const Gamma Gamma_H1,
+       const Gamma Gamma_H2,
 	     const Gamma GammaB_sigma,
 	     const Gamma GammaB_nucl,
 	     robj &result);
@@ -215,7 +219,7 @@ public:
 	     const mobj2 &Ds_spec,
 	     const mobj &Dd_tf,
 	     const mobj &Ds_ti,
-	     const Gamma Gamma_H,
+       const Gamma Gamma_H,
 	     const Gamma GammaB_sigma,
 	     const Gamma GammaB_nucl,
 	     robj &result);
@@ -225,7 +229,8 @@ public:
          const mobj &Du_spec,
          const PropagatorField &qd_tf,
          const PropagatorField &qs_ti,
-         const Gamma Gamma_H,
+         const Gamma Gamma_H1,
+         const Gamma Gamma_H2,
          const Gamma GammaB_sigma,
          const Gamma GammaB_nucl,
          const std::string op,
@@ -236,7 +241,8 @@ public:
 	 const mobj &Du_spec,
 	 const PropagatorField &qd_tf,
 	 const PropagatorField &qs_ti,
-	 const Gamma Gamma_H,
+   const Gamma Gamma_H1,
+   const Gamma Gamma_H2,
 	 const Gamma GammaB_sigma,
 	 const Gamma GammaB_nucl,
          const std::string op,
@@ -1022,7 +1028,8 @@ void BaryonUtils<FImpl>::SigmaToNucleonQ1EyeSite(const mobj &Dq_loop,
              const mobj2 &Du_spec,
              const mobj &Dd_tf,
              const mobj &Ds_ti,
-             const Gamma Gamma_H,
+             const Gamma Gamma_H1,
+             const Gamma Gamma_H2,
              const Gamma GammaB_sigma,
              const Gamma GammaB_nucl,
              robj &result)
@@ -1030,10 +1037,10 @@ void BaryonUtils<FImpl>::SigmaToNucleonQ1EyeSite(const mobj &Dq_loop,
 
   Gamma g5(Gamma::Algebra::Gamma5); 
 
-  auto adjDd_GH_Ds      = g5 * adj(Dd_tf) * g5 * Gamma_H * Ds_ti;
+  auto adjDd_GH_Ds      = g5 * adj(Dd_tf) * g5 * Gamma_H1 * Ds_ti;
   auto Gn_adjDd_GH_Ds   = GammaB_nucl * adjDd_GH_Ds;
   auto Du_Gs            = Du_spec * GammaB_sigma;
-  auto Dq_GH            = Dq_loop * Gamma_H;
+  auto Dq_GH            = Dq_loop * Gamma_H2;
   auto Tr_Dq_GH         = trace(Dq_GH)()()();
 
   Real ee;
@@ -1084,7 +1091,8 @@ void BaryonUtils<FImpl>::SigmaToNucleonQ1NonEyeSite(const mobj &Du_ti,
              const mobj2 &Du_spec,
              const mobj &Dd_tf,
              const mobj &Ds_ti,
-             const Gamma Gamma_H,
+             const Gamma Gamma_H1,
+             const Gamma Gamma_H2,
              const Gamma GammaB_sigma,
              const Gamma GammaB_nucl,
              robj &result)
@@ -1093,9 +1101,9 @@ void BaryonUtils<FImpl>::SigmaToNucleonQ1NonEyeSite(const mobj &Du_ti,
   Gamma g5(Gamma::Algebra::Gamma5); 
 
   auto Du_Gs          = Du_spec * GammaB_sigma;
-  auto adjDd_GH_Ds = g5 * adj(Dd_tf) * g5 * Gamma_H * Ds_ti;
+  auto adjDd_GH_Ds = g5 * adj(Dd_tf) * g5 * Gamma_H1 * Ds_ti;
   auto Gn_adjDd_GH_Ds = GammaB_nucl * adjDd_GH_Ds;
-  auto adjDu_GH_Du    = g5 * adj(Du_tf) * g5 * Gamma_H * Du_ti;
+  auto adjDu_GH_Du    = g5 * adj(Du_tf) * g5 * Gamma_H2 * Du_ti;
   auto adjDu_GH_Du_Gs = adjDu_GH_Du * GammaB_sigma;
 
   Real ee;
@@ -1153,7 +1161,8 @@ void BaryonUtils<FImpl>::SigmaToNucleonQ2EyeSite(const mobj &Dq_loop,
              const mobj2 &Du_spec,
              const mobj &Dd_tf,
              const mobj &Ds_ti,
-             const Gamma Gamma_H,
+             const Gamma Gamma_H1,
+             const Gamma Gamma_H2,
              const Gamma GammaB_sigma,
              const Gamma GammaB_nucl,
              robj &result)
@@ -1161,7 +1170,7 @@ void BaryonUtils<FImpl>::SigmaToNucleonQ2EyeSite(const mobj &Dq_loop,
 
   Gamma g5(Gamma::Algebra::Gamma5); 
 
-  auto adjDd_GH_Duloop_GH_Ds = g5 * adj(Dd_tf) * g5 * Gamma_H * Dq_loop * Gamma_H * Ds_ti;
+  auto adjDd_GH_Duloop_GH_Ds = g5 * adj(Dd_tf) * g5 * Gamma_H1 * Dq_loop * Gamma_H2 * Ds_ti;
   auto Gn_adjDd_GH_Duloop_GH_Ds = GammaB_nucl * adjDd_GH_Duloop_GH_Ds;
   auto Du_Gs = Du_spec * GammaB_sigma;
 
@@ -1213,7 +1222,8 @@ void BaryonUtils<FImpl>::SigmaToNucleonQ2NonEyeSite(const mobj &Du_ti,
              const mobj2 &Du_spec,
              const mobj &Dd_tf,
              const mobj &Ds_ti,
-             const Gamma Gamma_H,
+             const Gamma Gamma_H1,
+             const Gamma Gamma_H2,
              const Gamma GammaB_sigma,
              const Gamma GammaB_nucl,
              robj &result)
@@ -1222,8 +1232,8 @@ void BaryonUtils<FImpl>::SigmaToNucleonQ2NonEyeSite(const mobj &Du_ti,
   Gamma g5(Gamma::Algebra::Gamma5); 
 
   auto Du_Gs              = Du_spec * GammaB_sigma;
-  auto adjDu_GH_Ds        = g5 * adj(Du_tf) * g5 * Gamma_H * Ds_ti;
-  auto adjDd_GH_Du        = g5 * adj(Dd_tf) * g5 * Gamma_H * Du_ti;
+  auto adjDu_GH_Ds        = g5 * adj(Du_tf) * g5 * Gamma_H1 * Ds_ti;
+  auto adjDd_GH_Du        = g5 * adj(Dd_tf) * g5 * Gamma_H2 * Du_ti;
   auto Gn_adjDd_GH_Du     = GammaB_nucl * adjDd_GH_Du; // for some reason I needed to split this into two lines to avoid the compilation error 'error: identifier "Grid::Gamma::mul" is undefined in device code'
 
   auto Gn_adjDd_GH_Du_Gs  = Gn_adjDd_GH_Du * GammaB_sigma;
@@ -1283,7 +1293,8 @@ void BaryonUtils<FImpl>::SigmaToNucleonEye(const PropagatorField &qq_loop,
              const mobj &Du_spec,
              const PropagatorField &qd_tf,
              const PropagatorField &qs_ti,
-             const Gamma Gamma_H,
+             const Gamma Gamma_H1,
+             const Gamma Gamma_H2,
              const Gamma GammaB_sigma,
              const Gamma GammaB_nucl,
              const std::string op,
@@ -1310,7 +1321,7 @@ void BaryonUtils<FImpl>::SigmaToNucleonEye(const PropagatorField &qq_loop,
       auto Ds_ti = vs_ti(ss);
       typedef decltype(coalescedRead(vcorr[0])) spinor;
       spinor result=Zero();
-      SigmaToNucleonQ1EyeSite(Dq_loop,Dq_spec_p[0],Dd_tf,Ds_ti,Gamma_H,GammaB_sigma,GammaB_nucl,result);
+      SigmaToNucleonQ1EyeSite(Dq_loop,Dq_spec_p[0],Dd_tf,Ds_ti,Gamma_H1,Gamma_H2,GammaB_sigma,GammaB_nucl,result);
       coalescedWrite(vcorr[ss],result);
     });//end loop over lattice sites
   } else if(op == "Q2"){
@@ -1320,7 +1331,7 @@ void BaryonUtils<FImpl>::SigmaToNucleonEye(const PropagatorField &qq_loop,
       auto Ds_ti = vs_ti(ss);
       typedef decltype(coalescedRead(vcorr[0])) spinor;
       spinor result=Zero();
-      SigmaToNucleonQ2EyeSite(Dq_loop,Dq_spec_p[0],Dd_tf,Ds_ti,Gamma_H,GammaB_sigma,GammaB_nucl,result);
+      SigmaToNucleonQ2EyeSite(Dq_loop,Dq_spec_p[0],Dd_tf,Ds_ti,Gamma_H1,Gamma_H2,GammaB_sigma,GammaB_nucl,result);
       coalescedWrite(vcorr[ss],result);
     });//end loop over lattice sites
   } else {
@@ -1335,7 +1346,8 @@ void BaryonUtils<FImpl>::SigmaToNucleonNonEye(const PropagatorField &qq_ti,
              const mobj &Du_spec,
              const PropagatorField &qd_tf,
              const PropagatorField &qs_ti,
-             const Gamma Gamma_H,
+             const Gamma Gamma_H1,
+             const Gamma Gamma_H2,
              const Gamma GammaB_sigma,
              const Gamma GammaB_nucl,
              const std::string op,
@@ -1364,7 +1376,7 @@ void BaryonUtils<FImpl>::SigmaToNucleonNonEye(const PropagatorField &qq_ti,
       auto Ds_ti = vs_ti(ss);
       typedef decltype(coalescedRead(vcorr[0])) spinor;
       spinor result=Zero();
-      SigmaToNucleonQ1NonEyeSite(Dq_ti,Dq_tf,Dq_spec_p[0],Dd_tf,Ds_ti,Gamma_H,GammaB_sigma,GammaB_nucl,result);
+      SigmaToNucleonQ1NonEyeSite(Dq_ti,Dq_tf,Dq_spec_p[0],Dd_tf,Ds_ti,Gamma_H1,Gamma_H2,GammaB_sigma,GammaB_nucl,result);
       coalescedWrite(vcorr[ss],result);
     });//end loop over lattice sites
   } else if(op == "Q2"){
@@ -1375,7 +1387,7 @@ void BaryonUtils<FImpl>::SigmaToNucleonNonEye(const PropagatorField &qq_ti,
       auto Ds_ti = vs_ti(ss);
       typedef decltype(coalescedRead(vcorr[0])) spinor;
       spinor result=Zero();
-      SigmaToNucleonQ2NonEyeSite(Dq_ti,Dq_tf,Dq_spec_p[0],Dd_tf,Ds_ti,Gamma_H,GammaB_sigma,GammaB_nucl,result);
+      SigmaToNucleonQ2NonEyeSite(Dq_ti,Dq_tf,Dq_spec_p[0],Dd_tf,Ds_ti,Gamma_H1,Gamma_H2,GammaB_sigma,GammaB_nucl,result);
       coalescedWrite(vcorr[ss],result);
     });//end loop over lattice sites
   } else {
