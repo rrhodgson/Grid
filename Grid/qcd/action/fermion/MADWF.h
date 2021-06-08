@@ -203,8 +203,8 @@ class MADWF
        }
     }
 
-    std::cout << GridLogMessage << "MADWF : Exceeded maxiter "<<std::endl;
-    assert(0);
+    for (int i=0; i<100; i++) std::cout << GridLogMessage << "MADWF : Exceeded maxiter "<<std::endl;
+    // assert(0);
 
   }
 
